@@ -3,226 +3,272 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#ffab40">
+<meta name="theme-color" content="#fff5e4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<!-- Design font. For the real app, self-host it so no request leaves to a third party. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
 <title>Family Call</title>
 <style>
 :root{
-  --bg:#fff7ec; --ink:#3b2f4a; --muted:#8a7f99; --card:#ffffff;
-  --pink:#ff8fab; --blue:#4fb3f6; --green:#4cc97f; --orange:#ffab40;
-  --red:#ff5d5d; --purple:#a98be0; --yellow:#ffd54f;
-  --r:28px; --shadow:0 6px 0 rgba(59,47,74,.13);
+  --bg:#fff5e4; --ink:#2a2350; --sil:#554d6e; --cream:#fff4e3; --muted:#7d7596;
+  --coral:#ff8a70; --coral-d:#e06a52;
+  --yellow:#ffc947; --yellow-d:#d4a21f;
+  --green:#5dd1a4; --green-d:#38a97c;
+  --blue:#6eb6ff; --blue-d:#4592e0;
+  --purple:#b79cff; --purple-d:#8f72e8;
+  --pink:#ff9cc8; --pink-d:#e076a8;
+  --red:#ff5a5f; --red-d:#cf3d43;
+  --dot:#4a35e0; --night:#1f1a45; --night2:#332c66;
+  --shade:rgba(42,35,80,.14);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overscroll-behavior:none;background:var(--bg);color:var(--ink);
-  font-family:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,sans-serif}
+  font-family:"Baloo 2",ui-rounded,"Segoe UI",system-ui,sans-serif;font-weight:700}
 body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 input,select{user-select:text;-webkit-user-select:text;font:inherit;color:inherit}
 #app{height:100dvh;max-width:560px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
-.screen{height:100%;display:flex;flex-direction:column;padding:16px;gap:16px;overflow-y:auto;position:relative}
-.center{align-items:center;justify-content:center;text-align:center}
+.screen{height:100%;display:flex;flex-direction:column;padding:20px;gap:18px;overflow-y:auto;overflow-x:hidden;position:relative;isolation:isolate}
+.blob{position:absolute;border-radius:50%;z-index:-1;pointer-events:none}
 .hidden{display:none!important}
-h1,h2,h3{margin:0}
+h1,h2,h3,p{margin:0}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
 button:disabled{cursor:default}
+svg.ic{width:var(--is,32px);height:var(--is,32px);fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block;flex:none}
 
-/* buttons */
-.btn{min-height:64px;border-radius:var(--r);padding:0 24px;font-size:20px;font-weight:800;background:var(--card);
-  box-shadow:var(--shadow);transition:transform .08s,box-shadow .08s}
-.btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(59,47,74,.13)}
-.btn.primary{background:var(--orange);color:#fff}
-.btn.small{min-height:48px;font-size:16px;padding:0 18px;border-radius:16px}
-.btn.danger{background:#ffe1e1;color:#b33}
-.btn.ghost{background:transparent;box-shadow:none;color:var(--muted)}
-.round{width:64px;height:64px;min-width:64px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);
-  font-size:30px;display:grid;place-items:center}
-.round:active{transform:translateY(4px)}
-.link{color:var(--muted);text-decoration:underline;font-size:15px;padding:12px}
+/* ---------- colour + 3D button system (from the design) ---------- */
+.c-coral{--c:var(--coral);--d:var(--coral-d)}
+.c-yellow{--c:var(--yellow);--d:var(--yellow-d)}
+.c-green{--c:var(--green);--d:var(--green-d)}
+.c-blue{--c:var(--blue);--d:var(--blue-d)}
+.c-purple{--c:var(--purple);--d:var(--purple-d)}
+.c-pink{--c:var(--pink);--d:var(--pink-d)}
+.c-red{--c:var(--red);--d:var(--red-d)}
+.c-white{--c:#fff;--d:var(--shade)}
+.b3d{background:var(--c);box-shadow:0 8px 0 var(--d);transition:transform .08s,box-shadow .08s}
+.b3d:not(:disabled):active{transform:translateY(6px);box-shadow:0 2px 0 var(--d)}
+.cbtn{width:72px;height:72px;min-width:72px;border-radius:50%;display:grid;place-items:center;--is:34px}
+.cbtn.lg{width:88px;height:88px;min-width:88px;--is:40px}
+.cbtn.xl{width:112px;height:112px;min-width:112px;--is:52px}
+.cbtn.on{background:var(--yellow)}
+.pill{display:flex;align-items:center;gap:22px;width:100%;min-height:104px;border-radius:52px;padding:0 18px;
+  font-size:clamp(26px,8vw,36px);font-weight:800;text-align:left;line-height:1}
+.pill .ib{position:relative;width:80px;height:80px;min-width:80px;border-radius:50%;background:#fff;display:grid;place-items:center;--is:42px}
+.pill .ib .udot{top:-4px;right:-4px;width:28px}
+.pill.center{justify-content:center}
+.pill.sm{min-height:80px;font-size:24px;gap:16px;padding:0 12px}
+.pill.sm .ib{width:58px;height:58px;min-width:58px;--is:30px}
 
-/* avatars */
-.av{position:relative;display:grid;place-items:center;border-radius:50%;width:100%;aspect-ratio:1;
-  font-size:clamp(48px,14vw,72px);box-shadow:inset 0 -8px 0 rgba(0,0,0,.08)}
-.av.sm{width:48px;min-width:48px;font-size:28px}
-.av.xl{width:min(52vw,220px);font-size:min(28vw,120px)}
-.dot{position:absolute;top:4%;right:4%;width:28px;height:28px;border-radius:50%;background:var(--red);border:4px solid #fff;
-  animation:pop .4s}
-.av.sm .dot{width:16px;height:16px;border-width:3px;top:-2px;right:-2px}
+/* ---------- avatars (silhouette in a cream circle) ---------- */
+.aw{position:relative;display:inline-block;width:var(--as,64px);flex:none;transition:transform .2s}
+.ava{display:block;width:100%;aspect-ratio:1;border-radius:50%;background:var(--cream);border:var(--ab,4px) solid #fff;overflow:hidden}
+.ava svg{display:block;width:100%;height:100%}
+.ava video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+.udot{position:absolute;top:1%;right:1%;width:24%;aspect-ratio:1;border-radius:50%;background:var(--dot);border:4px solid #fff;animation:pop .4s}
+.aw.sm{--as:56px;--ab:4px}
+.aw.md{--as:72px;--ab:5px}
+.aw.lg{--as:150px;--ab:8px}
+.aw.xl{--as:min(58vw,240px);--ab:10px}
+.aw.active{transform:scale(1.12)}
+.aw.active .ava{box-shadow:0 0 0 5px var(--yellow)}
 
-/* login / onboarding */
-.login{justify-content:center;gap:20px;padding:24px}
-.logo{font-size:72px;text-align:center;animation:float 3s ease-in-out infinite}
-.login h1{text-align:center;font-size:38px}
-.login h2{font-size:28px}
-.sub{text-align:center;color:var(--muted);margin:0;font-size:18px}
-.card-btn{display:flex;align-items:center;gap:16px;text-align:left;background:var(--card);border-radius:var(--r);
-  padding:20px;box-shadow:var(--shadow);min-height:96px}
-.card-btn:active{transform:translateY(4px)}
-.card-btn .big{font-size:44px}
-.card-btn b{display:block;font-size:21px}
-.card-btn small{display:block;color:var(--muted);font-size:15px;margin-top:4px}
-.fine{text-align:center;color:var(--muted);font-size:14px;margin:0}
-.step{color:var(--orange);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:13px}
-.field{width:100%;min-height:64px;border-radius:20px;border:3px solid #eadfce;background:#fff;padding:0 20px;font-size:22px;outline:none}
-.field:focus{border-color:var(--orange)}
+/* ---------- login / onboarding ---------- */
+.login{justify-content:center;gap:18px;padding:28px 22px}
+.logo svg{width:104px;height:104px;display:block;margin:0 auto}
+.login h1{text-align:center;font-size:42px;font-weight:800;line-height:1}
+.login h2{font-size:32px;font-weight:800;line-height:1.1}
+.sub{text-align:center;color:var(--muted);font-size:18px;font-weight:600}
+.sub.left{text-align:left}
+.card-btn{display:flex;align-items:center;gap:16px;text-align:left;border-radius:36px;padding:18px;min-height:104px}
+.card-btn .ib{width:72px;height:72px;min-width:72px;border-radius:50%;background:var(--c);display:grid;place-items:center;--is:36px}
+.card-btn b{display:block;font-size:22px;font-weight:800;line-height:1.1}
+.card-btn small{display:block;color:var(--muted);font-size:15px;font-weight:600;margin-top:4px;line-height:1.3}
+.fine{text-align:center;color:var(--muted);font-size:14px;font-weight:600}
+.step{color:var(--coral-d);font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px}
+.field{width:100%;min-height:64px;border-radius:24px;border:3px solid #eedfc6;background:#fff;padding:0 20px;font-size:22px;font-weight:700;outline:none}
+.field:focus{border-color:var(--coral)}
 .field.code{text-align:center;letter-spacing:.3em;font-weight:800;text-transform:uppercase}
-.field.sm{min-height:48px;font-size:16px;border-radius:14px}
-.emoji-pick{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.emoji-pick button{width:60px;height:60px;border-radius:50%;font-size:32px;background:#fff;box-shadow:var(--shadow)}
-.emoji-pick button.on{outline:4px solid var(--orange)}
+.field.sm{min-height:48px;font-size:17px;border-radius:16px;padding:0 14px}
 .checklist{display:flex;flex-direction:column;gap:12px}
-.checklist div{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:20px;padding:14px 16px;box-shadow:var(--shadow)}
-.checklist span{font-size:28px}
-.checklist small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
-.topbar{display:flex;align-items:center;gap:12px}
+.checklist div{display:flex;gap:14px;align-items:center;background:#fff;border-radius:24px;padding:12px 14px;box-shadow:0 6px 0 var(--shade)}
+.checklist .ib{width:52px;height:52px;min-width:52px;border-radius:50%;background:var(--c);display:grid;place-items:center;--is:26px}
+.checklist b{display:block;font-size:18px;line-height:1.1}
+.checklist small{display:block;color:var(--muted);font-size:14px;font-weight:600;line-height:1.3}
+.topbar{display:flex;align-items:center;gap:14px}
+.swatches{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.swatches button{width:52px;height:52px;border-radius:50%;background:var(--c);border:5px solid #fff;box-shadow:0 4px 0 var(--d)}
+.swatches button.on{outline:4px solid var(--ink)}
 
-/* PIN pad */
-.dots{display:flex;gap:16px;justify-content:center;margin:8px 0 16px}
-.dots i{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);opacity:.4}
+/* ---------- PIN pad ---------- */
+.dots{display:flex;gap:16px;justify-content:center;margin:6px 0 14px}
+.dots i{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);opacity:.35}
 .dots i.on{background:var(--ink);opacity:1}
 .shake{animation:shake .4s}
-.pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px;justify-content:center}
-.key{width:76px;height:76px;border-radius:50%;background:#fff;box-shadow:var(--shadow);font-size:28px;font-weight:800}
-.key:active{transform:translateY(4px)}
-.lock{font-size:56px}
+.pad{display:grid;grid-template-columns:repeat(3,78px);gap:14px;justify-content:center}
+.key{width:78px;height:78px;border-radius:50%;font-size:30px;font-weight:800;display:grid;place-items:center;--is:30px}
+.lockbig{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;--is:48px;margin:0 auto}
+.center{align-items:center;justify-content:center;text-align:center}
 
-/* child home */
-.home-h{display:flex;align-items:center;gap:10px;font-size:26px;padding:4px 8px 0 88px;min-height:56px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;padding:8px 8px 24px}
-.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px;border-radius:var(--r);transition:transform .1s}
-.tile:active{transform:scale(.94)}
-.tile .nm{font-size:20px;font-weight:800}
-.tile:disabled{opacity:.35}
+/* ---------- child home ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding-bottom:12px}
+.tile{border-radius:40px;padding:22px 10px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  font-size:clamp(20px,6.2vw,28px);font-weight:800;line-height:1.05}
+.tile .aw{--as:76%;--ab:6px}
+.tile:disabled{opacity:.4}
 .gate-corner{position:absolute;top:0;left:0;width:84px;height:84px;z-index:5;display:grid;place-items:center}
 .gate-corner svg{opacity:0;transition:opacity .3s}
 .gate-corner.show svg{opacity:.6}
-.sleep{position:absolute;inset:auto 16px 24px 16px;background:#2f2a55;color:#fff;border-radius:var(--r);padding:20px;
-  display:flex;flex-direction:column;align-items:center;font-size:56px}
-.sleep b{font-size:24px}.sleep small{font-size:16px;opacity:.8}
+.sleep{position:absolute;left:16px;right:16px;bottom:24px;background:var(--night);color:#fff;border-radius:36px;padding:20px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;--is:56px;z-index:6}
+.sleep b{font-size:26px}
 
-/* person */
-.person{align-items:center;justify-content:space-between;padding-bottom:28px}
-.person .back{align-self:flex-start}
-.hero{display:flex;flex-direction:column;align-items:center;gap:12px}
-.hero h2{font-size:34px}
-.actions{display:flex;gap:16px;width:100%;justify-content:center}
-.act{position:relative;flex:1;max-width:150px;aspect-ratio:1;border-radius:36px;color:#fff;font-size:52px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 8px 0 rgba(0,0,0,.15)}
-.act small{font-size:16px;font-weight:800}
-.act:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.15)}
-.act .dot{top:-6px;right:-6px}
-.green{background:var(--green)}.blue{background:var(--blue)}.orange{background:var(--orange)}
+/* ---------- person ---------- */
+.person{justify-content:space-between;align-items:center;padding-bottom:30px}
+.person>.cbtn{align-self:flex-start}
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px}
+.hero h2{font-size:clamp(42px,12vw,58px);font-weight:800;line-height:1}
+.stack{display:flex;flex-direction:column;gap:20px;width:100%}
 
-/* chat */
-.chat{padding:0;gap:0}
-.chat-h{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;box-shadow:0 2px 0 #f1e6d6;font-size:22px}
-.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
-.msg{display:flex;align-items:flex-end;gap:8px;max-width:88%}
-.msg.me{align-self:flex-end;flex-direction:row-reverse}
-.bubble{background:#fff;border-radius:26px;padding:10px;box-shadow:var(--shadow)}
-.msg.me .bubble{background:#ffe7c4}
-.bubble.sticker{background:none;box-shadow:none;font-size:72px;padding:0;line-height:1}
-.bubble .pic{display:block;max-width:220px;width:100%;border-radius:18px}
-.bubble.text{font-size:20px;padding:14px 18px;user-select:text}
-.voice{display:flex;align-items:center;gap:10px;padding:4px 8px 4px 4px}
-.voice .pp{width:64px;height:64px;border-radius:50%;background:var(--orange);color:#fff;font-size:28px;display:grid;place-items:center}
-.voice .wave{display:flex;gap:3px;align-items:center;height:40px}
-.voice .wave i{width:5px;border-radius:3px;background:#d7b98e}
-.voice.playing .wave i{background:var(--orange);animation:bounce .6s ease-in-out infinite alternate}
-.voice small{color:var(--muted);font-weight:800}
-.composer{display:flex;align-items:center;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff}
-.composer .tool{width:56px;height:56px;min-width:56px;font-size:28px}
-.mic{margin-left:auto;width:92px;height:92px;border-radius:50%;background:var(--red);color:#fff;font-size:44px;
-  box-shadow:0 8px 0 #c64444;touch-action:none;transition:transform .1s}
-.mic.hot{transform:scale(1.15);box-shadow:0 0 0 14px rgba(255,93,93,.25)}
-.textrow{display:flex;gap:8px;padding:8px 16px 0;background:#fff}
-.tray{position:absolute;left:12px;right:12px;bottom:130px;background:#fff;border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.15);
-  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px;z-index:4}
-.tray button{font-size:48px;aspect-ratio:1;border-radius:20px}
-.tray button:active{background:#fff3e0;transform:scale(.9)}
-.rec{position:absolute;left:16px;right:16px;bottom:130px;background:var(--red);color:#fff;border-radius:var(--r);padding:20px;
-  display:flex;align-items:center;gap:16px;z-index:4;font-size:22px}
-.rec .bars{flex:1;display:flex;gap:4px;align-items:center;height:56px}
-.rec .bars i{flex:1;height:100%;background:#fff;border-radius:4px;transform:scaleY(.15);transition:transform .06s}
+/* ---------- chat ---------- */
+.chat{background:#dfeefc;padding:0;gap:0}
+.chat-h{display:flex;align-items:center;gap:14px;padding:18px 20px 8px;font-size:clamp(30px,9vw,40px);font-weight:800}
+.msgs{flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;align-items:center;gap:10px;max-width:94%}
+.msg.me{align-self:flex-end}
+.bub{background:#fff;border-radius:44px;padding:10px}
+.msg.me .bub{background:var(--blue)}
+.voice{display:flex;align-items:center;gap:14px;padding-right:16px}
+.voice .pp{width:64px;height:64px;min-width:64px;border-radius:50%;display:grid;place-items:center;background:var(--pc,var(--coral));color:var(--ink);--is:26px}
+.voice .pp svg{fill:currentColor}
+.msg.me .voice .pp{background:#fff}
+.wave{display:flex;gap:4px;align-items:center;height:44px}
+.wave i{width:4px;border-radius:2px;background:var(--ink)}
+.voice.playing .wave i{animation:bounce .5s ease-in-out infinite alternate}
+.voice small{font-size:18px;font-weight:800;min-width:38px}
+.bub.pic{padding:10px;border-radius:36px}
+.bub.pic img{display:block;width:min(62vw,260px);border-radius:28px}
+.sticker svg{width:116px;height:116px;display:block}
+.bub.text{padding:14px 22px;font-size:22px;user-select:text;-webkit-user-select:text}
+.empty{margin:auto;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:6px;--is:48px}
+.composer{padding:8px 20px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:18px}
+.tools{display:flex;justify-content:center;gap:22px}
+.talk{justify-content:center;min-height:96px;touch-action:none;gap:16px}
+.talk>.ic{--is:48px}
+.talk.hot{transform:scale(1.03);box-shadow:0 2px 0 var(--d),0 0 0 12px rgba(255,138,112,.3)}
+.talk .live{display:flex;align-items:center;gap:14px}
+.live .bars{display:flex;gap:4px;align-items:center;height:48px}
+.live .bars i{width:6px;height:100%;background:var(--ink);border-radius:3px;transform:scaleY(.15);transition:transform .06s}
+.tray{background:#fff;border-radius:36px;box-shadow:0 8px 0 rgba(69,146,224,.25);display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px}
+.tray button{aspect-ratio:1;border-radius:22px;display:grid;place-items:center}
+.tray button:active{background:#dfeefc;transform:scale(.92)}
+.tray svg{width:84%;height:84%}
+.textrow{display:flex;gap:10px}
 
-/* modal (draw / camera) */
-.modal{position:absolute;inset:0;background:rgba(59,47,74,.55);z-index:10;display:flex;flex-direction:column;padding:16px;gap:12px}
-.modal .sheet{flex:1;background:#fff;border-radius:var(--r);overflow:hidden;position:relative}
-.modal canvas,.modal video,.modal img.snap{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}
-.modal .bar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
-.swatch{width:52px;height:52px;border-radius:50%;border:4px solid #fff;box-shadow:var(--shadow)}
-.swatch.on{transform:scale(1.18);border-color:var(--ink)}
+/* ---------- full-screen sheets (draw / camera) ---------- */
+.modal{position:absolute;inset:0;background:var(--mbg,#ffe0ec);z-index:20;display:flex;flex-direction:column;gap:16px;padding:20px}
+.sheet{flex:1;min-height:200px;background:#fff;border-radius:40px;overflow:hidden;position:relative;box-shadow:0 8px 0 var(--shade)}
+.sheet canvas,.sheet video,.sheet img{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}
+.row{display:flex;align-items:center;justify-content:center;gap:12px}
+.row.start{justify-content:flex-start}
+.sw{width:clamp(46px,13.5vw,64px);aspect-ratio:1;border-radius:50%;border:6px solid #fff;background:var(--c);flex:none}
+.sw.on{box-shadow:0 0 0 5px var(--ink)}
+.pen-dot{width:30px;height:30px;border-radius:50%;background:var(--ink)}
+.starbtn{flex:1;max-width:220px;height:72px;border-radius:40px;display:grid;place-items:center;--is:38px}
+.pcur{position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;border:6px solid;transform:translate(-50%,-50%);left:-40px;top:-40px;pointer-events:none}
 
-/* call */
-.call{background:#231d33;color:#fff;padding:0}
-.remote{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:26px}
-.remote small{opacity:.7;font-size:16px}
+/* ---------- call ---------- */
+.call{background:var(--night);padding:16px;gap:16px}
+.stage{flex:1;border-radius:40px;overflow:hidden;position:relative;min-height:280px}
+.namepill{position:absolute;top:18px;left:18px;background:#fff;border-radius:30px;padding:6px 24px;font-size:26px;font-weight:800;z-index:2;line-height:1.15}
+.namepill small{display:block;font-size:14px;color:var(--muted);font-weight:700}
+.remote{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center}
+.remote svg{width:92%;max-width:440px;display:block}
+.selfview{position:absolute;top:18px;right:18px;width:30%;aspect-ratio:3/4;border-radius:28px;border:6px solid #fff;background:#dfeefc;overflow:hidden;z-index:2}
+.selfview video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.selfview video.mirror{transform:scaleX(-1)}
+.selfview .ph svg{position:absolute;left:0;bottom:-6%;width:100%}
+.fx{position:absolute;left:20%;width:60%;pointer-events:none;z-index:3}
+.fx.top{top:12%}.fx.mid{top:33%}
+.fx svg{width:100%;display:block}
+.letsplay{position:absolute;left:18px;bottom:22px;z-index:2;width:auto;min-height:80px;font-size:26px;padding:0 28px 0 10px;gap:14px}
+.letsplay .ib{width:60px;height:60px;min-width:60px;--is:32px}
+.ctl-panel{background:var(--night2);border-radius:36px;padding:14px 16px 22px;display:flex;flex-direction:column;gap:16px}
+.frow{display:flex;gap:12px;overflow-x:auto;padding:9px}
+.ftile{width:78px;min-width:78px;height:78px;border-radius:24px;display:grid;place-items:center;background:var(--c);--is:40px}
+.ftile.on{box-shadow:0 0 0 4px var(--night2),0 0 0 9px var(--yellow)}
+.crow{display:flex;justify-content:space-around;align-items:center}
 .pulse{animation:pulse 2s infinite}
-.self{position:absolute;top:16px;right:16px;width:34%;aspect-ratio:3/4;border-radius:22px;overflow:hidden;background:#3d3555;
-  border:3px solid #fff;box-shadow:0 8px 20px rgba(0,0,0,.3)}
-.self video{width:100%;height:100%;object-fit:cover;display:block}
-.self video.mirror{transform:scaleX(-1)}
-.self .nocam{position:absolute;inset:0;display:grid;place-items:center;font-size:40px}
-.fx{position:absolute;left:50%;transform:translateX(-50%);font-size:52px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
-.fx.top{top:2%}.fx.mid{top:30%}.fx.low{top:44%;font-size:30px}
-.filters{display:flex;gap:10px;overflow-x:auto;padding:0 16px 8px}
-.filters button{min-width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.15);font-size:34px}
-.filters button.on{background:var(--orange)}
-.call-ctl{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 16px calc(20px + env(safe-area-inset-bottom))}
-.call-ctl .round{background:rgba(255,255,255,.18);box-shadow:none;color:#fff}
-.call-ctl .round.off{background:#fff;color:var(--ink)}
-.call-ctl .end{background:var(--red)}
-.call-ctl .end span{display:inline-block;transform:rotate(135deg)}
-.call-ctl .play{background:var(--orange);width:auto;padding:0 18px;border-radius:32px;font-size:20px;font-weight:800;gap:6px;display:flex}
 
-/* incoming */
-.incoming{background:radial-gradient(circle at 50% 35%,var(--c),#2f2a55 75%);color:#fff;align-items:center;justify-content:space-around;text-align:center}
-.incoming h2{font-size:36px}
-.ringing{animation:ring 1s infinite}
-.answer{width:140px;height:140px;border-radius:50%;background:var(--green);font-size:64px;box-shadow:0 0 0 0 rgba(76,201,127,.7);animation:halo 1.4s infinite}
+/* ---------- incoming call + game invite ---------- */
+.incoming,.invite{align-items:center;justify-content:space-between;padding:40px 20px 30px;text-align:center}
+.incoming h2,.invite h2{font-size:clamp(44px,13vw,60px);font-weight:800;line-height:1}
+.halo{border-radius:50%;margin-top:70px;animation:halo 2.4s ease-in-out infinite;
+  box-shadow:0 0 0 40px rgba(255,255,255,.22),0 0 0 88px rgba(255,255,255,.12)}
+.incoming .mid,.invite .mid{display:flex;flex-direction:column;align-items:center;gap:40px}
+.invite .mid{gap:24px}
+.inv-av{position:relative;display:inline-block}
+.badge{position:absolute;right:-8%;bottom:4%;width:44%;aspect-ratio:1;border-radius:50%;background:var(--c);border:7px solid #fff;display:grid;place-items:center;--is:52%}
+.irow{display:flex;gap:16px;width:100%;align-items:center}
+.irow .pill{flex:1}
+.pill>.ic{--is:46px}
+.dots3{display:flex;gap:10px}
+.dots3 i{width:16px;height:16px;border-radius:50%;background:var(--ink);animation:dot 1s infinite alternate}
+.dots3 i:nth-child(2){animation-delay:.2s}.dots3 i:nth-child(3){animation-delay:.4s}
 
-/* games */
-.game{gap:12px}
-.game-pick{display:grid;gap:16px}
-.gtile{display:flex;align-items:center;gap:18px;background:#fff;border-radius:var(--r);padding:18px 22px;box-shadow:var(--shadow);font-size:22px;font-weight:800;min-height:96px}
-.gtile span{font-size:46px}
-.gtile:active{transform:translateY(4px)}
-.mini{display:flex;gap:8px;align-items:center;margin-left:auto}
-.mini video{width:64px;height:64px;border-radius:16px;object-fit:cover;transform:scaleX(-1);background:#ddd}
-.turn{text-align:center;font-size:22px;font-weight:800;min-height:32px}
-.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(100%,380px);margin:0 auto}
-.cell{aspect-ratio:1;background:#fff;border-radius:24px;box-shadow:var(--shadow);font-size:56px}
-.cell:not(:disabled):active{transform:scale(.93)}
-.over{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:26px;margin-top:8px}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(100%,420px);margin:0 auto}
-.card{aspect-ratio:3/4;border-radius:18px;background:var(--purple);color:#fff;font-size:40px;box-shadow:var(--shadow);transition:transform .25s}
-.card.open{background:#fff;transform:rotateY(180deg)}
-.card.open span{display:inline-block;transform:rotateY(180deg)}
-.card.done{background:#e6f9ee;opacity:.75}
-.score{display:flex;justify-content:center;gap:24px;font-size:20px;font-weight:800}
-.draw-wrap{flex:1;position:relative;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);min-height:280px}
-.draw-wrap canvas{width:100%;height:100%;display:block;touch-action:none}
-.partner{position:absolute;font-size:30px;transition:left .1s linear,top .1s linear;pointer-events:none;transform:translate(-50%,-110%)}
-.palette{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
-.overlay-msg{position:absolute;inset:0;background:rgba(255,247,236,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:6;font-size:24px;font-weight:800;text-align:center}
-.overlay-msg .av{width:140px}
+/* ---------- games ---------- */
+.ghead{display:flex;align-items:center;gap:14px}
+.ghead .sp{flex:1}
+.gcard{min-height:clamp(112px,18dvh,160px);border-radius:52px;font-size:clamp(28px,9vw,40px);gap:26px}
+.gcard .ib{width:clamp(84px,25vw,112px);height:clamp(84px,25vw,112px);min-width:clamp(84px,25vw,112px);--is:52%}
+.gstage{flex:1;display:flex;flex-direction:column;gap:16px;min-height:0}
+.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(100%,400px);margin:auto}
+.cell{aspect-ratio:1;border-radius:28px;background:#fff;box-shadow:0 7px 0 rgba(143,114,232,.35);display:grid;place-items:center}
+.cell svg{width:68%;height:68%}
+.cell:not(:disabled):active{transform:translateY(5px);box-shadow:0 2px 0 rgba(143,114,232,.35)}
+.over{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:auto}
+.bigstar{color:var(--yellow-d);--is:84px}
+.bigstar svg{fill:var(--yellow)}
+.score{display:flex;justify-content:center;gap:28px}
+.score>span{display:flex;align-items:center;gap:6px;--is:26px;color:var(--yellow-d)}
+.score svg.ic{fill:var(--yellow)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:min(100%,420px);margin:auto}
+.card{aspect-ratio:3/4;border-radius:22px;display:grid;place-items:center;color:#fff;--is:46%}
+.card.open{background:#fff;box-shadow:0 6px 0 rgba(56,169,124,.35)}
+.card.open svg{width:78%;height:78%}
+.card.done{opacity:.55}
+.pz-board{background:#fff;border-radius:40px;padding:14px;box-shadow:0 8px 0 rgba(69,146,224,.3);width:min(100%,420px);margin:auto auto 0}
+.pz-grid{display:grid;grid-template-columns:repeat(3,1fr);border-radius:28px;overflow:hidden;aspect-ratio:1}
+.pz-cell{background-size:300% 300%;position:relative}
+.pz-slot{background:var(--cream);outline:4px dashed #b3aab8;outline-offset:-6px}
+.pz-tray{background:#fff;border-radius:40px;padding:18px;display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;
+  box-shadow:0 8px 0 rgba(69,146,224,.3);min-height:150px;width:min(100%,420px);margin:0 auto auto}
+.piece{width:min(22vw,104px);aspect-ratio:1;border-radius:24px;background-size:300% 300%;border:5px solid #dfeefc;touch-action:none}
+.piece.sel{border-color:var(--blue-d);transform:scale(1.06)}
+.piece.partner{border-color:var(--coral);transform:scale(1.06)}
+.ghost{position:fixed;z-index:100;pointer-events:none;border-radius:24px;background-size:300% 300%;border:5px solid var(--blue-d);
+  box-shadow:0 12px 24px rgba(0,0,0,.2);transform:translate(-50%,-50%) scale(1.08)}
+.wiggle{animation:shake .4s}
 
-/* adult / parent */
-.adult{background:#f6f4f9;gap:14px}
-.adult-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.adult-h small{display:block;color:var(--muted)}
-.adult-h b{font-size:22px}
-.panel{background:#fff;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.panel h3{font-size:18px}
-.panel p{margin:0;color:var(--muted);font-size:15px}
-.row-item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:12px}
-.row-item .grow{flex:1;min-width:0}
-.row-item small{display:block;color:var(--muted)}
-.row-item .mini-btn{width:44px;height:44px;border-radius:12px;background:#f3eef8;font-size:20px}
-.add{display:flex;gap:8px}
-.add select{min-height:48px;border-radius:14px;border:2px solid #eadfce;font-size:24px;background:#fff}
+/* ---------- adult screens (parent + family member) ---------- */
+.adult{background:#f6f3fb;gap:14px}
+.adult-h{display:flex;align-items:center;gap:12px}
+.adult-h .sp{flex:1}
+.adult-h small{display:block;color:var(--muted);font-weight:600}
+.adult-h b{font-size:22px;font-weight:800}
+.panel{background:#fff;border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:19px;font-weight:800}
+.panel p{color:var(--muted);font-size:15px;font-weight:600}
+.panel.col{align-items:center;text-align:center}
+.panel.col h2{font-size:28px;font-weight:800}
+.prow{display:flex;align-items:center;gap:10px}
+.prow .grow{flex:1;min-width:0;font-size:18px}
+.mini-btn{width:44px;height:44px;border-radius:14px;background:#f1ecf8;display:grid;place-items:center;--is:22px}
+.mini-btn:disabled{opacity:.3}
+.btn{min-height:52px;border-radius:18px;padding:0 18px;font-size:17px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px;--is:22px}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px}
-.tog small{display:block;color:var(--muted);font-size:14px}
+.tog small{display:block;color:var(--muted);font-size:14px;font-weight:600}
 .tog input{display:none}
 .tog i{width:58px;height:34px;min-width:58px;border-radius:20px;background:#ddd;position:relative;transition:.2s}
 .tog i::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.2s}
@@ -230,28 +276,27 @@ button:disabled{cursor:default}
 .tog input:checked+i::after{left:28px}
 .times{display:flex;align-items:center;gap:8px;color:var(--muted)}
 .times input{min-height:44px;border-radius:12px;border:2px solid #eadfce;padding:0 10px}
-.act-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;font-size:15px}
-.act-list li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #f0ecf4;padding:6px 0}
+.act-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:220px;overflow:auto;font-size:15px;font-weight:600}
+.act-list li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #f0ecf4;padding:7px 0}
 .act-list time{color:var(--muted);white-space:nowrap}
-.code-chip{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;letter-spacing:.2em;background:#fff3e0;border-radius:12px;padding:8px 14px}
+.code-chip{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;letter-spacing:.2em;background:#fff1cc;border-radius:12px;padding:6px 12px}
 .demo{border:2px dashed #d9cdea}
-.demo .btns{display:flex;flex-wrap:wrap;gap:8px}
-.adult-actions{display:grid;gap:12px}
+.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.link{color:var(--muted);text-decoration:underline;font-size:15px;padding:12px;font-weight:600}
+.muted{color:var(--muted);font-weight:600}
 
-/* toast + confetti */
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 20px;border-radius:18px;
-  font-size:17px;z-index:100;max-width:90vw;text-align:center;animation:pop .25s}
-.confetti{position:absolute;top:-40px;font-size:32px;pointer-events:none;z-index:50;animation:fall 1.8s ease-in forwards}
+/* ---------- toast + confetti ---------- */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:20px;
+  font-size:17px;z-index:200;max-width:90vw;text-align:center}
+.conf{position:absolute;top:-20px;width:14px;height:14px;z-index:50;pointer-events:none;animation:fall 1.8s ease-in forwards}
 
-@keyframes pop{from{transform:scale(.5);opacity:0}}
-.toast{animation:none}
-@keyframes float{50%{transform:translateY(-8px)}}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
 @keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-@keyframes pulse{50%{transform:scale(1.05)}}
-@keyframes ring{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-8deg)}20%,40%{transform:rotate(8deg)}50%{transform:rotate(0)}}
-@keyframes halo{70%{box-shadow:0 0 0 30px rgba(76,201,127,0)}100%{box-shadow:0 0 0 0 rgba(76,201,127,0)}}
-@keyframes bounce{to{transform:scaleY(.4)}}
-@keyframes fall{to{transform:translateY(110dvh) rotate(360deg);opacity:.8}}
+@keyframes pulse{50%{transform:scale(1.04)}}
+@keyframes halo{50%{box-shadow:0 0 0 52px rgba(255,255,255,.18),0 0 0 108px rgba(255,255,255,.08)}}
+@keyframes bounce{to{transform:scaleY(.35)}}
+@keyframes dot{to{transform:translateY(-10px);opacity:.4}}
+@keyframes fall{to{transform:translateY(110dvh) rotate(540deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -260,253 +305,354 @@ button:disabled{cursor:default}
 <script>
 'use strict';
 /* =========================================================================
-   Family Call — clickable prototype (single file, no backend).
-   Everything "server-side" is simulated with localStorage + timers.
-   In the real app: Django + Channels enforces the whitelist, stores media
-   privately, and relays WebRTC signaling / game state over a WebSocket.
+   Family Call — clickable prototype following "Family Call.pdf".
+   No backend: the other person is simulated with timers, data lives in
+   localStorage. The real app moves all of this behind Django + Channels.
    ========================================================================= */
 
-const STICKERS = ['😀','😍','🥰','😂','😮','😢','👍','👏','❤️','🌟','🌈','🎉','🐱','🐶','🦄','🍦'];
-const REPLIES  = ['😍','❤️','👏','🌟','🥰','😂','🦄','🎉'];
-const EMOJIS   = ['👵','👴','👩','👨','🧔','👧','👦','👩‍🦱','🧕','👳‍♂️'];
-const COLORS   = ['#ff8fab','#6ec6ff','#b39ddb','#81c784','#ffd54f','#ffab91','#80deea'];
-const INK      = ['#3b2f4a','#ff5d5d','#ffab40','#ffd54f','#4cc97f','#4fb3f6','#a98be0'];
-const FILTERS  = [
-  {id:null,  icon:'🚫'},
-  {id:'crown',icon:'👑',fx:'👑',pos:'top'},
-  {id:'hat',  icon:'🎩',fx:'🎩',pos:'top'},
-  {id:'glass',icon:'🕶️',fx:'🕶️',pos:'mid'},
-  {id:'uni',  icon:'🦄',fx:'🦄',pos:'top'},
-  {id:'nose', icon:'🔴',fx:'🔴',pos:'low'},
-  {id:'stars',icon:'✨',fx:'✨✨✨',pos:'top'},
-];
-const DEMO_INVITE = 'KIDS42';
+/* ---------- palette (matches the design) ---------- */
+const PAL = {
+  coral:['#ff8a70','#e06a52','#ffe3dd'], yellow:['#ffc947','#d4a21f','#fff1cc'],
+  green:['#5dd1a4','#38a97c','#dcf5ea'], blue:['#6eb6ff','#4592e0','#dfeefc'],
+  purple:['#b79cff','#8f72e8','#ece4ff'], pink:['#ff9cc8','#e076a8','#ffe0ec'],
+};
+const COLOR_KEYS = Object.keys(PAL);
+const pal = k => { const p = PAL[k] || PAL.coral; return {c:p[0], d:p[1], l:p[2]}; };
+const INK = ['#2a2350','#ff6b4a','#ffad1f','#34a87a','#3f8fe0','#8c6fe6'];   // drawing colours
 
+/* ---------- line icons (replace every emoji button) ---------- */
+const P = {
+  home:'<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6.5 9.5V19h11V9.5"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  video:'<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5 21 7v10l-5.5-3.5"/>',
+  message:'<path d="M7 4.5h12a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H9l-4 4V6.5a2 2 0 0 1 2-2z"/>',
+  dice:'<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><g fill="currentColor" stroke="none"><circle cx="8.3" cy="8.3" r="1.5"/><circle cx="15.7" cy="8.3" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="8.3" cy="15.7" r="1.5"/><circle cx="15.7" cy="15.7" r="1.5"/></g>',
+  play:'<path d="M8 5.5v13l11-6.5z" stroke="none"/>',
+  pause:'<rect x="6.5" y="5" width="4" height="14" rx="1.2" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" stroke="none"/>',
+  smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14.3c1 1.6 2.4 2.4 4 2.4s3-.8 4-2.4"/><g fill="currentColor" stroke="none"><circle cx="9" cy="10" r="1.3"/><circle cx="15" cy="10" r="1.3"/></g>',
+  pencil:'<path d="M4.5 19.5l1-4.2L16.3 4.5a2.1 2.1 0 0 1 3 3L8.6 18.4z"/><path d="M14.5 6.3l3 3"/>',
+  camera:'<path d="M4 7.5h3.2l1.8-2.5h6l1.8 2.5H20a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+  micOff:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7M4 4l16 16"/>',
+  hangup:'<path d="M3 13.5c5-4.5 13-4.5 18 0l-1.6 2.6c-.3.5-.9.6-1.4.4l-2.6-1.1c-.4-.2-.6-.6-.6-1v-1.8a11 11 0 0 0-5.6 0v1.8c0 .4-.2.8-.6 1L6 16.5c-.5.2-1.1.1-1.4-.4z"/>',
+  flip:'<path d="M19.5 10a8 8 0 0 0-14.2-3.3L4 8.5M4 4v4.5h4.5"/><path d="M4.5 14a8 8 0 0 0 14.2 3.3L20 15.5M20 20v-4.5h-4.5"/>',
+  ban:'<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
+  bow:'<path d="M12 12 4 7v10zM12 12l8-5v10z"/>',
+  glasses:'<circle cx="7.5" cy="14" r="3.5"/><circle cx="16.5" cy="14" r="3.5"/><path d="M11 14h2M4.2 13 3 8.5M19.8 13 21 8.5"/>',
+  crown:'<path d="M4.5 17 3.5 7.5l5 4L12 6l3.5 5.5 5-4-1 9.5z"/><path d="M5.5 20h13"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+  puzzle:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.8" y="13.8" width="6.5" height="6.5" rx="2" transform="rotate(14 17 17)"/>',
+  cards:'<rect x="3" y="6.5" width="9.5" height="13" rx="2" transform="rotate(-9 7.7 13)"/><rect x="11.5" y="4.5" width="9.5" height="13" rx="2" transform="rotate(9 16.2 11)"/>',
+  ttt:'<path d="M9 3.5v17M15 3.5v17M3.5 9h17M3.5 15h17"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  check:'<path d="M4.5 12.5l5 5 10-11"/>',
+  eraser:'<path d="M8.5 19.5h11"/><path d="M4.6 14.6l8.8-8.8a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 18.6a2 2 0 0 1-2.8 0l-3.6-3.6a.3.3 0 0 1 0-.4z"/><path d="M9 10.2l5.2 5.2"/>',
+  undo:'<path d="M8.5 14 4 9.5 8.5 5"/><path d="M4 9.5h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  mail:'<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  send:'<path d="M4 12 20 4l-6 16-2.5-6.5z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  up:'<path d="M6 15l6-6 6 6"/>', down:'<path d="M6 9l6 6 6-6"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  key:'<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5l2.5 2.5M14 9l2 2"/>',
+  download:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  pin:'<path d="M12 21v-6M8.5 3.5h7l-1 5.5 3 3h-11l3-3z"/>',
+  phone:'<path d="M5 3.5h3.5l1.5 5-2.2 1.4a11 11 0 0 0 6.3 6.3l1.4-2.2 5 1.5V19a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.1 1.5 1.5 0 0 1 5 3.5z"/>',
+};
+const icon = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${P[n]||''}</svg>`;
+function starPath(cx,cy,R,r=R*.45){ let d=''; for(let i=0;i<10;i++){ const a=Math.PI/5*i-Math.PI/2, k=i%2?r:R; d+=(i?'L':'M')+(cx+k*Math.cos(a)).toFixed(1)+' '+(cy+k*Math.sin(a)).toFixed(1); } return d+'Z'; }
+
+/* ---------- avatar silhouettes ---------- */
+const SIL = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="40" r="17" fill="#554d6e"/><path d="M18 102C20 75 34 63 50 63S80 75 82 102z" fill="#554d6e"/></svg>';
+const BIG_SIL = '<svg viewBox="0 0 100 90" aria-hidden="true"><circle cx="50" cy="28" r="17" fill="#554d6e"/><path d="M14 92C16 62 32 52 50 52S84 62 86 92z" fill="#554d6e"/></svg>';
+function avatar(ring, cls='', dot=false, inner=SIL){
+  return `<span class="aw ${cls}"><span class="ava" style="border-color:${ring}">${inner}</span>${dot?'<i class="udot"></i>':''}</span>`;
+}
+const APP_ICON = '<svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#ff8a70"/><path d="M256 104 92 236h44v156h240V236h44z" fill="#fff"/><path d="M256 352c-60-40-90-70-90-104a44 44 0 0 1 90-12 44 44 0 0 1 90 12c0 34-30 64-90 104z" fill="#ff5c8a"/></svg>';
+
+/* ---------- stickers (drawn, not emoji) ---------- */
+const face = (x,y,s=1) => `<g fill="#2a2350"><circle cx="${x-11*s}" cy="${y}" r="${4*s}"/><circle cx="${x+11*s}" cy="${y}" r="${4*s}"/></g><path d="M${x-10*s} ${y+9*s}Q${x} ${y+19*s} ${x+10*s} ${y+9*s}" stroke="#2a2350" stroke-width="${4*s}" fill="none" stroke-linecap="round"/>`;
+const STICKERS = {
+  heart:`<svg viewBox="0 0 100 100"><path d="M50 88C20 66 7 50 7 33 7 19 18 9 31 9c9 0 15 5 19 11 4-6 10-11 19-11 13 0 24 10 24 24 0 17-13 33-43 55z" fill="#ff5c8a" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>${face(50,42)}</svg>`,
+  star:`<svg viewBox="0 0 100 100"><path d="${starPath(50,52,46,22)}" fill="#ffc947" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>${face(50,52,.8)}</svg>`,
+  sun:`<svg viewBox="0 0 100 100"><path d="M50 5v12M50 83v12M5 50h12M83 50h12M18 18l9 9M73 73l9 9M82 18l-9 9M27 73l-9 9" stroke="#ffad1f" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="50" r="27" fill="#ffc947" stroke="#fff" stroke-width="5"/>${face(50,47,.8)}</svg>`,
+  flower:`<svg viewBox="0 0 100 100"><g fill="#ff9cc8" stroke="#fff" stroke-width="4">${[0,72,144,216,288].map(a=>`<circle cx="${(50+27*Math.sin(a*Math.PI/180)).toFixed(1)}" cy="${(50-27*Math.cos(a*Math.PI/180)).toFixed(1)}" r="18"/>`).join('')}</g><circle cx="50" cy="50" r="20" fill="#ffc947" stroke="#fff" stroke-width="4"/>${face(50,48,.6)}</svg>`,
+  rainbow:`<svg viewBox="0 0 100 100"><g fill="none" stroke-width="7">${['#ff6b4a','#ffad1f','#ffc947','#5dd1a4','#6eb6ff','#b79cff'].map((col,i)=>`<path d="M${10+i*7} 74a${40-i*7} ${40-i*7} 0 0 1 ${80-i*14} 0" stroke="${col}"/>`).join('')}</g><g fill="#fff" stroke="#cfe4f8" stroke-width="2"><ellipse cx="17" cy="77" rx="15" ry="9"/><ellipse cx="83" cy="77" rx="15" ry="9"/></g></svg>`,
+  cloud:`<svg viewBox="0 0 100 100"><path d="M27 78a18 18 0 0 1-2-36 23 23 0 0 1 43-8 18 18 0 0 1 10 44z" fill="#fff" stroke="#6eb6ff" stroke-width="5" stroke-linejoin="round"/>${face(50,57,.8)}</svg>`,
+  balloon:`<svg viewBox="0 0 100 100"><path d="M50 74c4 8-6 12 0 22" stroke="#2a2350" stroke-width="3" fill="none"/><path d="M45 70h10l-5 7z" fill="#ff8a70"/><ellipse cx="50" cy="38" rx="27" ry="33" fill="#ff8a70" stroke="#fff" stroke-width="5"/>${face(50,38,.8)}</svg>`,
+  cat:`<svg viewBox="0 0 100 100"><path d="M19 42 22 9l22 18zM81 42 78 9 56 27z" fill="#ffc947" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="56" r="34" fill="#ffc947" stroke="#fff" stroke-width="5"/>${face(50,53,.9)}<path d="M12 60h18M12 69l18-4M88 60H70M88 69l-18-4" stroke="#2a2350" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+};
+const STICKER_KEYS = Object.keys(STICKERS);
+
+/* ---------- face filters (overlay on your own camera) ---------- */
+const FX = {
+  bow:`<svg viewBox="0 0 100 60"><path d="M50 30 20 12v36zM50 30l30-18v36z" fill="#ff9cc8" stroke="#2a2350" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="30" r="7" fill="#ff9cc8" stroke="#2a2350" stroke-width="4"/></svg>`,
+  glasses:`<svg viewBox="0 0 100 60"><g fill="rgba(110,182,255,.35)" stroke="#2a2350" stroke-width="5"><circle cx="29" cy="32" r="16"/><circle cx="71" cy="32" r="16"/></g><path d="M45 30q5-5 10 0M13 28 5 18M87 28l8-10" stroke="#2a2350" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`,
+  crown:`<svg viewBox="0 0 100 60"><path d="M18 52 12 14l20 16 18-24 18 24 20-16-6 38z" fill="#ffc947" stroke="#2a2350" stroke-width="4" stroke-linejoin="round"/></svg>`,
+  stars:`<svg viewBox="0 0 100 60">${[[18,34,12],[50,18,15],[82,34,12]].map(([x,y,r])=>`<path d="${starPath(x,y,r)}" fill="#ffc947" stroke="#2a2350" stroke-width="3" stroke-linejoin="round"/>`).join('')}</svg>`,
+};
+const FILTERS = [
+  {id:null, icon:'ban', col:'white'},
+  {id:'bow', icon:'bow', col:'pink', pos:'top'},
+  {id:'glasses', icon:'glasses', col:'blue', pos:'mid'},
+  {id:'crown', icon:'crown', col:'yellow', pos:'top'},
+  {id:'stars', icon:'star', col:'green', pos:'top'},
+];
+
+/* ---------- pictures used by the demo ---------- */
+const svgUrl = s => 'data:image/svg+xml,' + encodeURIComponent(s);
+const SAMPLE_DRAWING = svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180"><rect width="300" height="180" rx="22" fill="#fff4e3"/><g stroke="#2a2350" stroke-width="3" stroke-linejoin="round"><path d="M30 72 90 26l60 46z" fill="#ff8a70"/><rect x="42" y="72" width="96" height="68" fill="#ff9cc8"/><rect x="78" y="96" width="24" height="44" fill="#6eb6ff"/><circle cx="240" cy="52" r="22" fill="#ffc947"/><path d="M240 14v8M240 82v8M202 52h8M270 52h8M213 25l6 6M261 73l6 6M267 25l-6 6M219 73l-6 6" stroke-linecap="round"/><path d="M190 140v-34"/><circle cx="190" cy="99" r="7" fill="#b79cff"/></g><path d="M14 142h272" stroke="#34a87a" stroke-width="5" stroke-linecap="round"/></svg>`);
+const SCENE_URL = svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="#9fd3ff"/><circle cx="232" cy="72" r="42" fill="#ffc947"/><g fill="#fff"><ellipse cx="78" cy="66" rx="46" ry="18"/><ellipse cx="108" cy="52" rx="30" ry="20"/></g><rect x="50" y="196" width="11" height="44" fill="#8a5a44"/><circle cx="55" cy="186" r="34" fill="#2e8f63"/><path d="M0 214Q90 180 170 214T300 200V300H0z" fill="#5dd1a4"/><path d="M95 300Q150 222 300 232V300z" fill="#34a87a"/><path d="M118 192 165 150l47 42z" fill="#ff8a70"/><rect x="130" y="192" width="70" height="42" fill="#ff9cc8"/><rect x="157" y="206" width="16" height="28" fill="#6eb6ff"/></svg>`);
+
+/* ---------- state ---------- */
 const DEFAULT = {
   setup:false, role:null, childName:'', pinHash:null, me:null,
   settings:{typing:false, filters:true, quietOn:false, quietFrom:'20:00', quietTo:'07:00'},
   contacts:[
-    {id:'g',name:'Grandma',   emoji:'👵',color:'#ff8fab'},
-    {id:'d',name:'Dad',       emoji:'👨',color:'#6ec6ff'},
-    {id:'a',name:'Aunt Sara', emoji:'👩',color:'#b39ddb'},
-    {id:'u',name:'Uncle Omar',emoji:'🧔',color:'#81c784'},
-    {id:'c',name:'Cousin Lina',emoji:'👧',color:'#ffd54f'},
-    {id:'p',name:'Grandpa',   emoji:'👴',color:'#ffab91'},
+    {id:'g', name:'Grandma',    color:'coral'},
+    {id:'p', name:'Grandpa',    color:'yellow'},
+    {id:'d', name:'Aunt Dina',  color:'green'},
+    {id:'u', name:'Uncle Omar', color:'blue'},
+    {id:'l', name:'Lina',       color:'purple'},
+    {id:'h', name:'Aunt Hala',  color:'pink'},
   ],
-  unread:{g:true},
-  messages:{g:[{from:'them',type:'sticker',data:'🌟',t:Date.now()}]},
+  unread:{g:true, u:true},
+  messages:{g:[
+    {from:'them', type:'voice', data:null, dur:12},
+    {from:'me',   type:'voice', data:null, dur:7},
+    {from:'them', type:'drawing', data:SAMPLE_DRAWING},
+    {from:'me',   type:'sticker', data:'heart'},
+  ]},
   invites:[], activity:[],
 };
-
-/* ---------- state ---------- */
+const STORE = 'familycall-v2';
 let S = load();
 function load(){
-  try{ const s = JSON.parse(localStorage.getItem('familycall')); if(s) return {...structuredClone(DEFAULT),...s}; }catch(e){}
+  try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s) return {...structuredClone(DEFAULT), ...s}; }catch(e){}
   return structuredClone(DEFAULT);
 }
 function save(){
-  try{ localStorage.setItem('familycall', JSON.stringify(S)); }
-  catch(e){ // storage full (voice notes are big) – keep only recent messages
-    for(const k in S.messages) S.messages[k] = S.messages[k].slice(-8);
-    try{ localStorage.setItem('familycall', JSON.stringify(S)); }catch(e2){}
-  }
+  try{ localStorage.setItem(STORE, JSON.stringify(S)); }
+  catch(e){ for(const k in S.messages) S.messages[k] = S.messages[k].slice(-8); try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e2){} }
 }
-function log(text){ S.activity.unshift({t:Date.now(),text}); S.activity = S.activity.slice(0,60); save(); }
+function log(text){ S.activity.unshift({t:Date.now(), text}); S.activity = S.activity.slice(0,60); save(); }
 
 /* ---------- helpers ---------- */
 const app = document.getElementById('app');
 const $  = s => app.querySelector(s);
 const $$ = s => [...app.querySelectorAll(s)];
-const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pick = a => a[Math.floor(Math.random()*a.length)];
-const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const mmss = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 
 let nav = 0, cleanups = [], current = null, currentChat = null;
 function go(fn, ...args){
-  cleanups.forEach(f=>{ try{f()}catch(e){} }); cleanups = [];
-  nav++; currentChat = null; current = {fn,args};
-  window.scrollTo(0,0); fn(...args);
+  cleanups.forEach(f=>{ try{ f(); }catch(e){} }); cleanups = [];
+  nav++; currentChat = null; current = {fn, args};
+  fn(...args);
 }
 const onCleanup = f => cleanups.push(f);
 function later(fn, ms){ const n = nav; const t = setTimeout(()=>{ if(n===nav) fn(); }, ms); onCleanup(()=>clearTimeout(t)); return t; }
 function refreshIf(...fns){ if(current && fns.includes(current.fn)) go(current.fn, ...current.args); }
 
-function say(text){
-  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate=.95; u.pitch=1.2; speechSynthesis.speak(u); }catch(e){}
-}
+function say(text){ try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate=.95; u.pitch=1.2; speechSynthesis.speak(u); }catch(e){} }
 function toast(text){
   document.querySelectorAll('.toast').forEach(t=>t.remove());
   const t = document.createElement('div'); t.className='toast'; t.textContent=text; document.body.appendChild(t);
   setTimeout(()=>t.remove(), 2600);
 }
 function confetti(){
-  for(let i=0;i<24;i++){
-    const s=document.createElement('span'); s.className='confetti'; s.textContent=pick(['🎉','⭐','🌈','💖','✨','🎈']);
-    s.style.left=Math.random()*100+'%'; s.style.animationDelay=Math.random()*.5+'s'; app.appendChild(s);
-    setTimeout(()=>s.remove(),2600);
+  const cols = Object.values(PAL).map(p=>p[0]);
+  for(let i=0;i<30;i++){
+    const s = document.createElement('span'); s.className='conf';
+    s.style.background = pick(cols); s.style.left = Math.random()*100+'%';
+    s.style.borderRadius = Math.random()<.5 ? '50%' : '4px'; s.style.animationDelay = Math.random()*.5+'s';
+    app.appendChild(s); setTimeout(()=>s.remove(), 2600);
   }
+}
+function chime(){
+  try{ const ac=new AudioContext(), o=ac.createOscillator(), g=ac.createGain();
+    o.frequency.setValueAtTime(880,ac.currentTime); o.frequency.setValueAtTime(1175,ac.currentTime+.12);
+    g.gain.setValueAtTime(.12,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.35);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.36); setTimeout(()=>ac.close(),500);
+  }catch(e){}
 }
 async function hashPin(pin){
   const data = new TextEncoder().encode('familycall-demo-salt:'+pin);
   if(crypto.subtle){ const b = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-  return 'insecure-'+pin.split('').reverse().join(''); // only when not on https/localhost
+  return 'insecure-'+pin.split('').reverse().join('');
 }
 function isQuiet(){
-  const s=S.settings; if(!s.quietOn) return false;
-  const m = t => { const [h,mm]=t.split(':').map(Number); return h*60+mm; };
-  const now = new Date(), n = now.getHours()*60+now.getMinutes(), a=m(s.quietFrom), b=m(s.quietTo);
+  const s = S.settings; if(!s.quietOn) return false;
+  const m = t => { const [h,mm] = t.split(':').map(Number); return h*60+mm; };
+  const d = new Date(), n = d.getHours()*60+d.getMinutes(), a = m(s.quietFrom), b = m(s.quietTo);
   return a<=b ? (n>=a && n<b) : (n>=a || n<b);
 }
-function childContact(){ return {id:'child', name:S.childName||'Mia', emoji:'🧒', color:'#ffab40'}; }
+function childContact(){ return {id:'child', name:S.childName||'Mia', color:'blue'}; }
 function getContact(id){ return id==='child' ? childContact() : S.contacts.find(c=>c.id===id); }
-function myFace(){ return S.role==='family' && S.me ? {emoji:S.me.emoji,color:'#a98be0'} : {emoji:'🧒',color:'#ffab40'}; }
+function meRing(c){
+  if(S.role==='family') return pal(S.me?.color||'purple').d;
+  return c && c.color==='blue' ? pal('purple').d : pal('blue').d;
+}
 function homeScreen(){ return S.role==='family' ? familyView : home; }
+function backFrom(id){ return id==='child' ? ()=>go(familyView) : ()=>go(person, id); }
 function useStream(stream){ onCleanup(()=>stream.getTracks().forEach(t=>t.stop())); return stream; }
+async function startCam(video, facing='user'){
+  try{
+    const s = useStream(await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}, audio:false}));
+    video.srcObject = s; video.classList.remove('hidden'); return s;
+  }catch(e){ return null; }
+}
+function blockedByQuiet(){ if(isQuiet() && S.role!=='family'){ say('Sleepy time'); go(home); return true; } return false; }
 
-/* No context menus / pinch zoom in the child UI */
 document.addEventListener('contextmenu', e=>e.preventDefault());
 document.addEventListener('gesturestart', e=>e.preventDefault());
 
 /* ---------- PIN pad ---------- */
 function pinPad(el, onDone){
-  let v='';
+  let v = '';
   el.innerHTML = `<div class="dots">${'<i></i>'.repeat(4)}</div>
-    <div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button class="key" data-k="${k}">${k}</button>`).join('')}</div>`;
+    <div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'del'].map(k=>k===''?'<span></span>':
+      `<button class="key c-white b3d" data-k="${k}" aria-label="${k==='del'?'Delete':k}">${k==='del'?icon('back'):k}</button>`).join('')}</div>`;
   const dots = [...el.querySelectorAll('.dots i')];
   const paint = () => dots.forEach((d,i)=>d.classList.toggle('on', i<v.length));
   const reset = () => { v=''; paint(); const d=el.querySelector('.dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); };
   el.querySelectorAll('.key').forEach(b=>b.onclick=()=>{
-    const k=b.dataset.k;
-    if(k==='⌫') v=v.slice(0,-1); else if(v.length<4) v+=k;
+    const k = b.dataset.k;
+    if(k==='del') v = v.slice(0,-1); else if(v.length<4) v += k;
     paint();
     if(v.length===4){ const val=v; setTimeout(()=>onDone(val, reset), 120); }
   });
 }
 
 /* =========================================================================
-   1. LOGIN / ONBOARDING
+   LOGIN / ONBOARDING
    ========================================================================= */
 function welcome(){
   app.innerHTML = `<section class="screen login">
-    <div class="logo">🏠💬</div>
+    <span class="blob" style="width:320px;height:320px;right:-130px;top:-130px;background:#ffe9c2"></span>
+    <span class="blob" style="width:280px;height:280px;left:-140px;bottom:-110px;background:#ffdfe8"></span>
+    <div class="logo">${APP_ICON}</div>
     <h1>Family Call</h1>
     <p class="sub">A safe place to talk and play — only with family.</p>
-    <button class="card-btn" id="parent"><span class="big">👩‍👧</span>
+    <button class="card-btn c-white b3d" id="parent"><span class="ib c-coral">${icon('lock')}</span>
       <span><b>Set up for my child</b><small>I'm the parent. I choose who she can talk to.</small></span></button>
-    <button class="card-btn" id="family"><span class="big">💌</span>
+    <button class="card-btn c-white b3d" id="family"><span class="ib c-blue">${icon('mail')}</span>
       <span><b>Join my family</b><small>I got an invite code from the parent.</small></span></button>
     <p class="fine">No ads · No strangers · Invite only</p>
   </section>`;
-  $('#parent').onclick = ()=>go(setupParent,1,{});
+  $('#parent').onclick = ()=>go(setupParent, 1, {});
   $('#family').onclick = ()=>go(join);
 }
 
 function setupParent(step, data){
-  const back = `<div class="topbar"><button class="round" id="back">⬅️</button><span class="step">Step ${Math.min(step,3)} of 3</span></div>`;
+  const top = `<div class="topbar"><button class="cbtn c-white b3d" id="back" aria-label="Back">${icon('back')}</button><span class="step">Step ${Math.min(step,3)} of 3</span></div>`;
   if(step===1){
-    app.innerHTML = `<section class="screen login">${back}
+    app.innerHTML = `<section class="screen login">${top}
       <h2>What's your child's name?</h2>
-      <p class="sub" style="text-align:left">It shows on her home screen. Family will see it too.</p>
+      <p class="sub left">It shows on her screens. Family will see it too.</p>
       <input id="cn" class="field" maxlength="20" placeholder="e.g. Mia" value="${esc(data.name||'')}">
-      <button class="btn primary" id="next">Next →</button></section>`;
+      <button class="pill sm center c-coral b3d" id="next">Next</button></section>`;
     $('#back').onclick = ()=>go(welcome);
     $('#cn').focus();
-    $('#next').onclick = ()=>{ const n=$('#cn').value.trim(); if(!n) return toast('Please type a name'); go(setupParent,2,{name:n}); };
+    $('#next').onclick = ()=>{ const n = $('#cn').value.trim(); if(!n) return toast('Please type a name'); go(setupParent, 2, {name:n}); };
   }
   else if(step===2 || step===3){
-    app.innerHTML = `<section class="screen login center">${back}
-      <div class="lock">${step===2?'🔐':'🔁'}</div>
+    app.innerHTML = `<section class="screen login center">${top}
+      <span class="lockbig ${step===2?'c-coral':'c-yellow'}" style="background:var(--c)">${icon(step===2?'lock':'key')}</span>
       <h2>${step===2?'Choose a parent PIN':'Type it again'}</h2>
       <p class="sub">${step===2?'4 numbers. Only you know it — it unlocks the parent area.':'Just to be sure.'}</p>
       <div id="pp"></div></section>`;
-    $('#back').onclick = ()=>go(setupParent,step-1,data);
+    $('#back').onclick = ()=>go(setupParent, step-1, data);
     pinPad($('#pp'), async (pin, reset)=>{
-      if(step===2) return go(setupParent,3,{...data,pin});
+      if(step===2) return go(setupParent, 3, {...data, pin});
       if(pin!==data.pin){ reset(); return toast("PINs don't match — try again"); }
-      S.pinHash = await hashPin(pin); S.childName=data.name; S.role='child'; S.setup=true;
-      log('Device set up'); go(setupParent,4,data);
+      S.pinHash = await hashPin(pin); S.childName = data.name; S.role = 'child'; S.setup = true;
+      log('Device set up'); go(setupParent, 4, data);
     });
   }
-  else {
+  else{
+    const item = (ic,col,title,sub) => `<div><span class="ib c-${col}">${icon(ic)}</span><p><b>${title}</b><small>${sub}</small></p></div>`;
     app.innerHTML = `<section class="screen login">
-      <h2>Almost done! 🎉</h2>
-      <p class="sub" style="text-align:left">A website can't lock a phone by itself. These steps make it safe:</p>
+      <h2>Almost done!</h2>
+      <p class="sub left">A website can't lock a phone by itself. These steps make it safe:</p>
       <div class="checklist">
-        <div><span>📲</span><p style="margin:0"><b>Add to Home Screen</b><small>Browser menu → "Install app". It opens with no address bar.</small></p></div>
-        <div><span>📌</span><p style="margin:0"><b>Turn on Screen Pinning</b><small>Android: Settings → Security → App pinning. iPad: Guided Access.</small></p></div>
-        <div><span>🚫</span><p style="margin:0"><b>Remove WhatsApp & Messenger</b><small>From this device. Strongest protection of all.</small></p></div>
-        <div><span>🤫</span><p style="margin:0"><b>Your secret door</b><small>Hold the <b>top-left corner</b> for 3 seconds, then type your PIN.</small></p></div>
+        ${item('download','green','Add to Home Screen','Browser menu → "Install app". It opens with no address bar.')}
+        ${item('pin','blue','Turn on Screen Pinning','Android: Settings → Security → App pinning. iPad: Guided Access.')}
+        ${item('ban','coral','Remove WhatsApp & Messenger','From this device. The strongest protection of all.')}
+        ${item('lock','purple','Your secret door','Hold the top-left corner for 3 seconds, then type your PIN.')}
       </div>
-      <button class="btn primary" id="start">Start ${esc(S.childName)}'s app</button></section>`;
+      <button class="pill sm center c-green b3d" id="start">${icon('check')}Start ${esc(S.childName)}'s app</button></section>`;
     $('#start').onclick = ()=>go(home);
   }
 }
 
 function join(){
-  let emoji = EMOJIS[0];
+  let color = 'purple';
   app.innerHTML = `<section class="screen login">
-    <div class="topbar"><button class="round" id="back">⬅️</button></div>
-    <h2>Join the family 💌</h2>
-    <p class="sub" style="text-align:left">Type the code the parent sent you.</p>
-    <input id="code" class="field code" maxlength="6" placeholder="••••••" autocapitalize="characters" autocomplete="off">
-    <p class="fine">Prototype demo code: <b>${DEMO_INVITE}</b></p>
+    <div class="topbar"><button class="cbtn c-white b3d" id="back" aria-label="Back">${icon('back')}</button></div>
+    <h2>Join the family</h2>
+    <p class="sub left">Type the code the parent sent you.</p>
+    <input id="code" class="field code" maxlength="6" placeholder="······" autocapitalize="characters" autocomplete="off">
+    <p class="fine">Prototype demo code: <b>KIDS42</b></p>
     <input id="nm" class="field" maxlength="20" placeholder="Your name (e.g. Grandma)">
-    <div class="emoji-pick">${EMOJIS.map((e,i)=>`<button data-e="${e}" class="${i?'':'on'}">${e}</button>`).join('')}</div>
-    <button class="btn primary" id="go">Join</button></section>`;
+    <p class="sub">Pick your colour</p>
+    <div class="swatches">${COLOR_KEYS.map(k=>`<button class="c-${k}${k===color?' on':''}" data-k="${k}" aria-label="${k}"></button>`).join('')}</div>
+    <button class="pill sm center c-coral b3d" id="go">Join</button></section>`;
   $('#back').onclick = ()=>go(welcome);
-  $$('.emoji-pick button').forEach(b=>b.onclick=()=>{ $$('.emoji-pick button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); emoji=b.dataset.e; });
+  $$('.swatches button').forEach(b=>b.onclick=()=>{ $$('.swatches button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); color=b.dataset.k; });
   $('#go').onclick = ()=>{
     const code = $('#code').value.trim().toUpperCase(), name = $('#nm').value.trim();
     const inv = S.invites.find(i=>i.code===code && !i.used);
-    if(code!==DEMO_INVITE && !inv) return toast('That code is not valid or was already used');
+    if(code!=='KIDS42' && !inv) return toast('That code is not valid or was already used');
     if(!name) return toast('Please type your name');
     if(inv){ inv.used = true; inv.by = name; }
-    S.me = {name, emoji}; S.role='family'; S.setup=true; save();
+    S.me = {name, color}; S.role = 'family'; S.setup = true; save();
     go(familyView);
   };
 }
 
 /* =========================================================================
-   2. FAMILY MEMBER VIEW (normal adult UI, not locked)
+   FAMILY MEMBER VIEW (adult, not locked)
    ========================================================================= */
 function familyView(){
-  const kid = childContact();
+  const kid = childContact(), p = pal(kid.color);
   app.innerHTML = `<section class="screen adult">
-    <header class="adult-h"><div><small>Signed in as</small><b>${S.me.emoji} ${esc(S.me.name)}</b></div></header>
-    <h3>Your family</h3>
-    <div class="row-item"><span class="av sm" style="background:${kid.color}">${kid.emoji}${S.unread.child?'<i class="dot"></i>':''}</span>
-      <div class="grow"><b>${esc(kid.name)}</b><small>Child account · protected</small></div></div>
-    <div class="adult-actions">
-      <button class="btn" id="m">💬 Messages</button>
-      <button class="btn" id="c">📹 Video call</button>
-      <button class="btn" id="p">🎲 Play a game</button>
+    <header class="adult-h">${avatar(pal(S.me.color).c,'sm')}<div><small>Signed in as</small><b>${esc(S.me.name)}</b></div></header>
+    <div class="panel col">${avatar(p.c,'lg',!!S.unread.child)}<h2>${esc(kid.name)}</h2><span class="muted">Child account · protected</span></div>
+    <div class="stack">
+      <button class="pill sm c-blue b3d" id="m"><span class="ib">${icon('message')}</span>Messages</button>
+      <button class="pill sm c-green b3d" id="c"><span class="ib">${icon('video')}</span>Video call</button>
+      <button class="pill sm c-yellow b3d" id="p"><span class="ib">${icon('dice')}</span>Play a game</button>
     </div>
     <p class="fine">You can only reach people the parent approved. Nobody can find this family by searching.</p>
     <button class="link" id="sw">Demo: switch this device to the child view</button>
   </section>`;
   $('#m').onclick = ()=>go(chat,'child');
   $('#c').onclick = ()=>go(call,'child','out');
-  $('#p').onclick = ()=>go(game,'child',false);
+  $('#p').onclick = ()=>go(picker,'child',false);
   $('#sw').onclick = ()=>{ S.role='child'; save(); go(home); };
 }
 
 /* =========================================================================
-   3. CHILD HOME — photo grid + hidden parent gate
+   1. CHILD HOME — design page 1
    ========================================================================= */
 function home(){
   const q = isQuiet();
   app.innerHTML = `<section class="screen home">
+    <span class="blob" style="width:340px;height:340px;right:-140px;top:-150px;background:#ffe9c2"></span>
+    <span class="blob" style="width:300px;height:300px;left:-150px;bottom:-130px;background:#ffdfe8"></span>
     <div class="gate-corner" id="gc"><svg width="64" height="64" viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="28" fill="none" stroke="#3b2f4a" stroke-width="5" stroke-linecap="round"
+      <circle cx="32" cy="32" r="28" fill="none" stroke="#2a2350" stroke-width="5" stroke-linecap="round"
         stroke-dasharray="176" stroke-dashoffset="176" transform="rotate(-90 32 32)"/></svg></div>
-    <header class="home-h"><span>👋</span><b>${esc(S.childName||'Hi!')}</b></header>
     <div class="grid">${S.contacts.map(c=>`
-      <button class="tile" data-id="${c.id}" ${q?'disabled':''} aria-label="${esc(c.name)}">
-        <span class="av" style="background:${c.color}">${c.emoji}${S.unread[c.id]?'<i class="dot"></i>':''}</span>
-        <span class="nm">${esc(c.name)}</span></button>`).join('')}</div>
-    ${q?`<div class="sleep">🌙<b>Sleepy time</b><small>See you in the morning!</small></div>`:''}
+      <button class="tile c-${c.color} b3d" data-id="${c.id}" ${q?'disabled':''} aria-label="${esc(c.name)}">
+        ${avatar('#fff','',!!S.unread[c.id])}<span>${esc(c.name)}</span></button>`).join('')}</div>
+    ${q?`<div class="sleep">${icon('moon')}<b>Sleepy time</b><span>See you in the morning!</span></div>`:''}
   </section>`;
-  $$('.tile').forEach(t=>t.onclick=()=>go(person,t.dataset.id));
+  $$('.tile').forEach(t=>t.onclick=()=>go(person, t.dataset.id));
   setupGate($('#gc'));
 }
 
@@ -514,7 +660,7 @@ function setupGate(el){
   let start=0, raf=0; const ring = el.querySelector('circle');
   const end = () => { cancelAnimationFrame(raf); start=0; el.classList.remove('show'); ring.style.strokeDashoffset='176'; };
   const tick = () => {
-    const p = Math.min(1,(performance.now()-start)/3000);
+    const p = Math.min(1, (performance.now()-start)/3000);
     if(p>.33){ el.classList.add('show'); ring.style.strokeDashoffset = String(176*(1-(p-.33)/.67)); }
     if(p>=1){ end(); go(gate); } else raf = requestAnimationFrame(tick);
   };
@@ -526,8 +672,9 @@ function setupGate(el){
 function gate(){
   if(!S.pinHash){ toast('No PIN set yet — opening parent area'); return go(parent); }
   app.innerHTML = `<section class="screen login center">
-    <div class="lock">🔒</div><h2>Parent PIN</h2><div id="pp"></div>
-    <button class="btn ghost" id="x">Cancel</button></section>`;
+    <span class="lockbig c-coral" style="background:var(--c)">${icon('lock')}</span>
+    <h2>Parent PIN</h2><div id="pp"></div>
+    <button class="cbtn c-white b3d" id="x" aria-label="Cancel" style="margin:0 auto">${icon('x')}</button></section>`;
   $('#x').onclick = ()=>go(home);
   pinPad($('#pp'), async (v, reset)=>{
     if(await hashPin(v)===S.pinHash){ log('Parent area opened'); go(parent); } else reset();
@@ -535,63 +682,69 @@ function gate(){
 }
 
 /* =========================================================================
-   4. PERSON SCREEN — Call / Message / Play
+   2. PERSON — design page 2
    ========================================================================= */
 function person(id){
   const c = getContact(id); if(!c) return go(home);
-  app.innerHTML = `<section class="screen person">
-    <button class="round back" id="back" aria-label="Home">🏠</button>
-    <div class="hero"><span class="av xl pulse" style="background:${c.color}">${c.emoji}</span><h2>${esc(c.name)}</h2></div>
-    <div class="actions">
-      <button class="act green" id="call" aria-label="Call"><span>📹</span><small>Call</small></button>
-      <button class="act blue"  id="msg"  aria-label="Message"><span>💬</span><small>Talk</small>${S.unread[id]?'<i class="dot"></i>':''}</button>
-      <button class="act orange" id="play" aria-label="Play"><span>🎲</span><small>Play</small></button>
+  const p = pal(c.color);
+  app.innerHTML = `<section class="screen person" style="background:${p.l}">
+    <button class="cbtn c-white b3d" id="back" aria-label="Home">${icon('home')}</button>
+    <div class="hero">${avatar(p.c,'xl')}<h2>${esc(c.name)}</h2></div>
+    <div class="stack">
+      <button class="pill c-green b3d" id="call"><span class="ib">${icon('video')}</span>Call</button>
+      <button class="pill c-blue b3d" id="msg"><span class="ib">${icon('message')}${S.unread[id]?'<i class="udot"></i>':''}</span>Message</button>
+      <button class="pill c-yellow b3d" id="play"><span class="ib">${icon('dice')}</span>Play</button>
     </div></section>`;
   say(c.name);
   $('#back').onclick = ()=>go(home);
-  $('#call').onclick = ()=>go(call,id,'out');
-  $('#msg').onclick  = ()=>go(chat,id);
-  $('#play').onclick = ()=>go(game,id,false);
+  $('#call').onclick = ()=>go(call, id, 'out');
+  $('#msg').onclick  = ()=>go(chat, id);
+  $('#play').onclick = ()=>go(picker, id, false);
 }
 
 /* =========================================================================
-   5. CONVERSATION — voice notes, stickers, drawings, photos, (text)
+   3. CONVERSATION — design page 3
    ========================================================================= */
 let currentAudio = null;
+function stopVoice(){ currentAudio?.stop(); currentAudio = null; }
 
 function chat(id){
   const c = getContact(id); if(!c) return go(homeScreen());
+  const p = pal(c.color);
   delete S.unread[id]; save();
   const typing = S.settings.typing || S.role==='family';
   app.innerHTML = `<section class="screen chat">
-    <header class="chat-h"><button class="round" id="back">⬅️</button>
-      <span class="av sm" style="background:${c.color}">${c.emoji}</span><b>${esc(c.name)}</b></header>
-    <div class="msgs" id="msgs"></div>
-    ${typing?`<div class="textrow"><input id="txt" class="field sm" maxlength="200" placeholder="Type a message"><button class="btn small primary" id="sendt">Send</button></div>`:''}
+    <header class="chat-h"><button class="cbtn c-white b3d" id="back" aria-label="Back">${icon('back')}</button>
+      ${avatar(p.c,'md')}<span>${esc(c.name)}</span></header>
+    <div class="msgs" id="msgs" style="--pc:${p.c}"></div>
     <footer class="composer">
-      <button class="round tool" id="st" aria-label="Stickers">😊</button>
-      <button class="round tool" id="dr" aria-label="Draw">🖍️</button>
-      <button class="round tool" id="ph" aria-label="Photo">📷</button>
-      <button class="mic" id="mic" aria-label="Hold to talk">🎤</button>
+      <div class="tray hidden" id="tray">${STICKER_KEYS.map(k=>`<button data-s="${k}" aria-label="${k}">${STICKERS[k]}</button>`).join('')}</div>
+      ${typing?`<div class="textrow"><input id="txt" class="field sm" maxlength="200" placeholder="Type a message"><button class="cbtn c-blue b3d" id="sendt" aria-label="Send" style="width:56px;height:56px;min-width:56px;--is:26px">${icon('send')}</button></div>`:''}
+      <div class="tools">
+        <button class="cbtn c-yellow b3d" id="st" aria-label="Stickers">${icon('smile')}</button>
+        <button class="cbtn c-pink b3d" id="dr" aria-label="Draw">${icon('pencil')}</button>
+        <button class="cbtn c-green b3d" id="ph" aria-label="Photo">${icon('camera')}</button>
+      </div>
+      <button class="pill talk c-coral b3d" id="talk" aria-label="Hold to talk">${icon('mic')}
+        <span class="lbl">Hold to talk</span>
+        <span class="live hidden"><span class="bars">${'<i></i>'.repeat(14)}</span><b>0:00</b></span></button>
     </footer>
-    <div class="tray hidden" id="tray">${STICKERS.map(s=>`<button data-s="${s}">${s}</button>`).join('')}</div>
-    <div class="rec hidden" id="rec"><span>🔴</span><div class="bars">${'<i></i>'.repeat(18)}</div><b id="rt">0</b></div>
   </section>`;
   currentChat = id;
-  onCleanup(()=>{ currentAudio?.pause(); currentAudio=null; });
+  onCleanup(stopVoice);
   renderMsgs(id);
 
-  $('#back').onclick = ()=>go(S.role==='family'?familyView:person, id);
+  $('#back').onclick = backFrom(id);
   $('#st').onclick = ()=>$('#tray').classList.toggle('hidden');
-  $$('#tray button').forEach(b=>b.onclick=()=>{ $('#tray').classList.add('hidden'); send(id,{type:'sticker',data:b.dataset.s}); });
+  $$('#tray button').forEach(b=>b.onclick=()=>{ $('#tray').classList.add('hidden'); send(id, {type:'sticker', data:b.dataset.s}); });
   $('#dr').onclick = ()=>drawModal(id);
   $('#ph').onclick = ()=>cameraModal(id);
   if(typing){
     const sendText = ()=>{
       let t = $('#txt').value.trim(); if(!t) return;
       // no links, ever: strip anything URL-shaped (the server must do this too)
-      t = t.replace(/\b(?:https?:\/\/|www\.)\S+/gi,'🚫').replace(/\b\S+\.(?:com|net|org|io|me|ly|app|co)\b\S*/gi,'🚫');
-      $('#txt').value=''; send(id,{type:'text',data:t});
+      t = t.replace(/\b(?:https?:\/\/|www\.)\S+/gi,'[link removed]').replace(/\b\S+\.(?:com|net|org|io|me|ly|app|co)\b\S*/gi,'[link removed]');
+      $('#txt').value = ''; send(id, {type:'text', data:t});
     };
     $('#sendt').onclick = sendText;
     $('#txt').onkeydown = e=>{ if(e.key==='Enter') sendText(); };
@@ -601,30 +754,36 @@ function chat(id){
 
 function renderMsgs(id){
   const box = $('#msgs'); if(!box) return;
-  const c = getContact(id), me = myFace();
-  const list = S.messages[id] || [];
+  const c = getContact(id), p = pal(c.color), list = S.messages[id] || [];
   box.innerHTML = list.length ? list.map((m,i)=>{
-    const who = m.from==='me' ? me : c;
+    const mine = m.from==='me';
     let body;
-    if(m.type==='sticker') body = `<div class="bubble sticker">${esc(m.data)}</div>`;
-    else if(m.type==='voice') body = `<div class="bubble"><button class="voice" data-i="${i}"><span class="pp">▶</span>
-        <span class="wave">${Array.from({length:12},(_,k)=>`<i style="height:${10+((k*37+i*13)%28)}px;animation-delay:${k*.05}s"></i>`).join('')}</span>
-        <small>${m.dur||1}s</small></button></div>`;
-    else if(m.type==='drawing'||m.type==='photo') body = `<div class="bubble"><img class="pic" src="${m.data}" alt=""></div>`;
-    else body = `<div class="bubble text">${esc(m.data)}</div>`;
-    return `<div class="msg ${m.from==='me'?'me':''}"><span class="av sm" style="background:${who.color}">${who.emoji}</span>${body}</div>`;
-  }).join('') : `<p class="fine" style="margin:auto">Hold the 🎤 and say hello!</p>`;
+    if(m.type==='sticker') body = `<div class="sticker">${STICKERS[m.data] || esc(m.data)}</div>`;
+    else if(m.type==='voice') body = `<div class="bub"><button class="voice" data-i="${i}" aria-label="Play voice note">
+        <span class="pp">${icon('play')}</span>
+        <span class="wave">${Array.from({length:14},(_,k)=>`<i style="height:${12+((k*37+i*13)%30)}px;animation-delay:${k*.05}s"></i>`).join('')}</span>
+        <small>${mmss(m.dur||1)}</small></button></div>`;
+    else if(m.type==='drawing' || m.type==='photo') body = `<div class="bub pic"><img src="${m.data}" alt=""></div>`;
+    else body = `<div class="bub text">${esc(m.data)}</div>`;
+    return `<div class="msg ${mine?'me':''}">${mine?'':avatar(p.c,'sm')}${body}</div>`;
+  }).join('') : `<div class="empty">${icon('mic')}<span>Hold the button and say hello!</span></div>`;
   box.scrollTop = box.scrollHeight;
-  box.querySelectorAll('.voice').forEach(btn=>btn.onclick=()=>{
-    const m = list[+btn.dataset.i];
-    if(btn.classList.contains('playing')){ currentAudio?.pause(); return; }
-    currentAudio?.pause();
-    box.querySelectorAll('.voice.playing').forEach(b=>{ b.classList.remove('playing'); b.querySelector('.pp').textContent='▶'; });
-    const a = new Audio(m.data); currentAudio = a;
-    const stop = ()=>{ btn.classList.remove('playing'); btn.querySelector('.pp').textContent='▶'; };
-    a.onpause = a.onended = stop;
-    a.play().then(()=>{ btn.classList.add('playing'); btn.querySelector('.pp').textContent='⏸'; }).catch(()=>toast('Could not play this voice note'));
-  });
+  box.querySelectorAll('.voice').forEach(btn=>btn.onclick=()=>playVoice(btn, list[+btn.dataset.i]));
+}
+
+function playVoice(btn, m){
+  if(btn.classList.contains('playing')){ stopVoice(); return; }
+  stopVoice();
+  const set = on => { btn.classList.toggle('playing', on); btn.querySelector('.pp').innerHTML = icon(on?'pause':'play'); };
+  if(m.data){
+    const a = new Audio(m.data);
+    a.onended = a.onpause = ()=>set(false);
+    a.play().then(()=>set(true)).catch(()=>toast('Could not play this voice note'));
+    currentAudio = {stop:()=>a.pause()};
+  } else {                       // demo notes have no audio — just animate
+    set(true); const t = setTimeout(()=>set(false), (m.dur||3)*1000);
+    currentAudio = {stop:()=>{ clearTimeout(t); set(false); }};
+  }
 }
 
 function send(id, msg){
@@ -636,32 +795,24 @@ function send(id, msg){
   simulateReply(id);
 }
 
-/* fake "the other person answers" so the prototype feels alive */
 const replyTimers = {};
 function simulateReply(id){
   clearTimeout(replyTimers[id]);
   replyTimers[id] = setTimeout(()=>{
-    (S.messages[id] = S.messages[id]||[]).push({from:'them', type:'sticker', data:pick(REPLIES), t:Date.now()});
-    if(currentChat===id) renderMsgs(id); else { S.unread[id]=true; refreshIf(home, familyView); }
+    (S.messages[id] = S.messages[id]||[]).push({from:'them', type:'sticker', data:pick(STICKER_KEYS), t:Date.now()});
+    if(currentChat===id) renderMsgs(id); else { S.unread[id] = true; refreshIf(home, familyView); }
     save(); chime();
   }, 2500);
-}
-function chime(){
-  try{ const ac=new AudioContext(), o=ac.createOscillator(), g=ac.createGain();
-    o.frequency.setValueAtTime(880,ac.currentTime); o.frequency.setValueAtTime(1175,ac.currentTime+.12);
-    g.gain.setValueAtTime(.12,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.35);
-    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.36); setTimeout(()=>ac.close(),500);
-  }catch(e){}
 }
 
 /* ---------- hold-to-record voice notes ---------- */
 async function startRecording(){
-  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder){ toast('🎤 Voice notes need HTTPS or localhost'); return null; }
+  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder){ toast('Voice notes need HTTPS or localhost'); return null; }
   let stream;
-  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
-  catch(e){ toast('🎤 Please allow the microphone'); return null; }
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
+  catch(e){ toast('Please allow the microphone'); return null; }
   const mime = ['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(m=>MediaRecorder.isTypeSupported(m));
-  const rec = new MediaRecorder(stream, mime?{mimeType:mime}:undefined), chunks=[];
+  const rec = new MediaRecorder(stream, mime?{mimeType:mime}:undefined), chunks = [];
   rec.ondataavailable = e => e.data.size && chunks.push(e.data);
   rec.start();
   const ac = new AudioContext(), an = ac.createAnalyser(); an.fftSize = 64;
@@ -672,7 +823,7 @@ async function startRecording(){
     rec.onstop = () => {
       stream.getTracks().forEach(t=>t.stop()); ac.close();
       const fr = new FileReader(); fr.onload = ()=>res({url:fr.result, dur});
-      fr.readAsDataURL(new Blob(chunks,{type:rec.mimeType||'audio/webm'}));
+      fr.readAsDataURL(new Blob(chunks, {type:rec.mimeType||'audio/webm'}));
     };
     rec.state!=='inactive' ? rec.stop() : rec.onstop();
   });
@@ -680,153 +831,123 @@ async function startRecording(){
 }
 
 function setupMic(id){
-  const mic = $('#mic'), recBox = $('#rec'), bars = [...recBox.querySelectorAll('.bars i')], rt = $('#rt');
-  let holding=false, r=null, raf=0;
+  const talk = $('#talk'), lbl = talk.querySelector('.lbl'), live = talk.querySelector('.live');
+  const bars = [...live.querySelectorAll('.bars i')], rt = live.querySelector('b');
+  let holding = false, r = null, raf = 0;
+  const show = on => { talk.classList.toggle('hot', on); lbl.classList.toggle('hidden', on); live.classList.toggle('hidden', !on); };
   const meter = () => {
     const d = new Uint8Array(r.an.frequencyBinCount); r.an.getByteFrequencyData(d);
-    bars.forEach((b,i)=>b.style.transform=`scaleY(${.12+Math.min(1,d[i+1]/200)})`);
-    rt.textContent = Math.floor((performance.now()-r.t0)/1000)+'s';
+    bars.forEach((b,i)=>b.style.transform = `scaleY(${.12+Math.min(1, d[i+1]/200)})`);
+    rt.textContent = mmss((performance.now()-r.t0)/1000);
     raf = requestAnimationFrame(meter);
   };
   const finish = async (discard=false) => {
-    holding=false; mic.classList.remove('hot'); recBox.classList.add('hidden'); cancelAnimationFrame(raf);
-    if(!r) return; const cur=r; r=null;
+    holding = false; show(false); cancelAnimationFrame(raf);
+    if(!r) return; const cur = r; r = null;
     const res = await cur.stop();
     if(discard) return;
-    if(res.dur < .7) return toast('Hold the 🎤 while you talk');
-    send(id,{type:'voice', data:res.url, dur:Math.max(1,Math.round(res.dur))});
+    if(res.dur < .7) return toast('Hold the button while you talk');
+    send(id, {type:'voice', data:res.url, dur:Math.max(1, Math.round(res.dur))});
   };
-  mic.onpointerdown = async e => {
-    e.preventDefault(); mic.setPointerCapture(e.pointerId);
-    holding=true; mic.classList.add('hot'); $('#tray').classList.add('hidden');
+  talk.onpointerdown = async e => {
+    e.preventDefault(); talk.setPointerCapture(e.pointerId);
+    holding = true; talk.classList.add('hot'); $('#tray').classList.add('hidden');
     const got = await startRecording();
-    if(!got){ holding=false; mic.classList.remove('hot'); return; }
+    if(!got){ holding = false; talk.classList.remove('hot'); return; }
     r = got;
-    if(!holding) return finish();            // released before mic was ready
-    recBox.classList.remove('hidden'); meter();
-    later(()=>{ if(r===got) finish(); }, 60000); // 60 s cap
+    if(!holding) return finish();             // released before the mic was ready
+    show(true); meter();
+    later(()=>{ if(r===got) finish(); }, 60000);   // 60 s cap
   };
-  mic.onpointerup = mic.onpointercancel = () => { if(r) finish(); else { holding=false; mic.classList.remove('hot'); } };
+  talk.onpointerup = talk.onpointercancel = () => { if(r) finish(); else { holding = false; talk.classList.remove('hot'); } };
   onCleanup(()=>finish(true));
 }
 
-/* ---------- drawing pad (shared by messages + game) ---------- */
-function drawPad(canvas, getColor){
-  const ctx = canvas.getContext('2d'), rect = canvas.getBoundingClientRect(), dpr = devicePixelRatio||1;
-  canvas.width = rect.width*dpr; canvas.height = rect.height*dpr; ctx.scale(dpr,dpr);
-  const clear = () => { ctx.fillStyle='#fff'; ctx.fillRect(0,0,rect.width,rect.height); };
-  clear(); ctx.lineCap='round'; ctx.lineJoin='round';
-  const line = (a,b,color,w=10) => { ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); };
-  const pt = e => { const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; };
-  let last=null;
-  canvas.onpointerdown = e => { canvas.setPointerCapture(e.pointerId); last=pt(e); line(last,{x:last.x+.1,y:last.y},getColor()); };
-  canvas.onpointermove = e => { if(!last) return; const p=pt(e); line(last,p,getColor()); last=p; };
-  canvas.onpointerup = canvas.onpointercancel = () => last=null;
-  return {line, clear, w:rect.width, h:rect.height};
+/* ---------- shared drawing board (chat drawings + Draw game) — design page 8 ---------- */
+function drawBoard(canvas){
+  const ctx = canvas.getContext('2d'), rect = canvas.getBoundingClientRect(), dpr = devicePixelRatio||1, W = rect.width, H = rect.height;
+  canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr,dpr); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const strokes = [];
+  const seg = (s,a,b) => { ctx.strokeStyle=s.color; ctx.lineWidth=s.w; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); };
+  const paint = s => { if(s.pts.length===1) seg(s, s.pts[0], {x:s.pts[0].x+.1, y:s.pts[0].y}); for(let i=1;i<s.pts.length;i++) seg(s, s.pts[i-1], s.pts[i]); };
+  const redraw = () => { ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); strokes.forEach(paint); };
+  const b = { W, H, color:INK[1], erase:false,
+    begin(p, color, w, who){ const s = {color, w, who, pts:[p]}; strokes.push(s); paint(s); return s; },
+    extend(s, p){ const a = s.pts[s.pts.length-1]; s.pts.push(p); seg(s, a, p); },
+    undo(){ for(let i=strokes.length-1;i>=0;i--) if(strokes[i].who==='me'){ strokes.splice(i,1); break; } redraw(); },
+  };
+  const pt = e => { const r = canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; };
+  let cur = null;
+  canvas.onpointerdown = e => { canvas.setPointerCapture(e.pointerId); cur = b.begin(pt(e), b.erase?'#fff':b.color, b.erase?30:10, 'me'); };
+  canvas.onpointermove = e => { if(cur) b.extend(cur, pt(e)); };
+  canvas.onpointerup = canvas.onpointercancel = () => cur = null;
+  redraw(); return b;
 }
-function palette(onPick){
-  return INK.map((c,i)=>`<button class="swatch ${i?'':'on'}" data-c="${c}" style="background:${c}"></button>`).join('');
+function drawUI(root, onStar){
+  root.insertAdjacentHTML('beforeend', `<div class="sheet"><canvas></canvas></div>
+    <div class="row">${INK.slice(1).map((c,i)=>`<button class="sw${i?'':' on'}" data-c="${c}" style="--c:${c}" aria-label="Colour"></button>`).join('')}</div>
+    <div class="row">
+      <button class="cbtn c-white b3d" data-t="pen" aria-label="Dark pen"><span class="pen-dot"></span></button>
+      <button class="cbtn c-white b3d" data-t="eraser" aria-label="Eraser">${icon('eraser')}</button>
+      <button class="cbtn c-white b3d" data-t="undo" aria-label="Undo">${icon('undo')}</button>
+      <button class="starbtn c-yellow b3d" data-t="star" aria-label="Send picture">${icon('star')}</button>
+    </div>`);
+  const cv = root.querySelector('canvas'), b = drawBoard(cv);
+  const sws = [...root.querySelectorAll('.sw')], pen = root.querySelector('[data-t=pen]'), er = root.querySelector('[data-t=eraser]');
+  const sel = color => { b.erase=false; b.color=color; sws.forEach(s=>s.classList.toggle('on', s.dataset.c===color)); pen.classList.toggle('on', color===INK[0]); er.classList.remove('on'); };
+  sws.forEach(s=>s.onclick=()=>sel(s.dataset.c));
+  pen.onclick = ()=>sel(INK[0]);
+  er.onclick = ()=>{ b.erase=true; er.classList.add('on'); pen.classList.remove('on'); sws.forEach(s=>s.classList.remove('on')); };
+  root.querySelector('[data-t=undo]').onclick = ()=>b.undo();
+  root.querySelector('[data-t=star]').onclick = ()=>onStar(cv);
+  return b;
 }
-function bindPalette(root, set){
-  root.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{ root.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on')); s.classList.add('on'); set(s.dataset.c); });
-}
-function modal(html){
-  const m = document.createElement('div'); m.className='modal'; m.innerHTML=html; app.querySelector('.screen').appendChild(m);
-  onCleanup(()=>m.remove()); return m;
+function modal(html, bg){
+  const m = document.createElement('div'); m.className = 'modal'; m.style.setProperty('--mbg', bg); m.innerHTML = html;
+  app.querySelector('.screen').appendChild(m); onCleanup(()=>m.remove()); return m;
 }
 function drawModal(id){
-  let color = INK[0];
-  const m = modal(`<div class="sheet"><canvas></canvas></div>
-    <div class="bar">${palette()}</div>
-    <div class="bar"><button class="round" data-a="x">❌</button><button class="round" data-a="clr">🗑️</button><button class="round" data-a="send" style="background:var(--green)">✅</button></div>`);
-  const cv = m.querySelector('canvas'), pad = drawPad(cv, ()=>color);
-  bindPalette(m, c=>color=c);
+  const m = modal(`<div class="row start"><button class="cbtn c-white b3d" data-a="x" aria-label="Close">${icon('x')}</button></div>`, '#ffe0ec');
   m.querySelector('[data-a=x]').onclick = ()=>m.remove();
-  m.querySelector('[data-a=clr]').onclick = ()=>pad.clear();
-  m.querySelector('[data-a=send]').onclick = ()=>{ send(id,{type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); m.remove(); };
+  drawUI(m, cv=>{ send(id, {type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); m.remove(); });
 }
 async function cameraModal(id){
-  // Camera only (getUserMedia) — there is deliberately NO <input type="file"> anywhere.
-  const m = modal(`<div class="sheet"><video autoplay playsinline muted style="transform:scaleX(-1)"></video><img class="snap hidden" alt=""></div>
-    <div class="bar"><button class="round" data-a="x">❌</button><button class="round" data-a="snap" style="width:84px;height:84px;font-size:40px">📸</button>
-    <button class="round hidden" data-a="again">🔄</button><button class="round hidden" data-a="send" style="background:var(--green)">✅</button></div>`);
+  // Camera only (getUserMedia). There is deliberately NO <input type="file"> anywhere.
+  const m = modal(`<div class="row start"><button class="cbtn c-white b3d" data-a="x" aria-label="Close">${icon('x')}</button></div>
+    <div class="sheet"><video autoplay playsinline muted style="transform:scaleX(-1)"></video><img class="hidden" alt=""></div>
+    <div class="row">
+      <button class="cbtn xl c-green b3d" data-a="snap" aria-label="Take photo">${icon('camera')}</button>
+      <button class="cbtn lg c-white b3d hidden" data-a="again" aria-label="Retake">${icon('undo')}</button>
+      <button class="cbtn xl c-green b3d hidden" data-a="send" aria-label="Send">${icon('check')}</button>
+    </div>`, '#dcf5ea');
   const v = m.querySelector('video'), img = m.querySelector('img'), btn = a => m.querySelector(`[data-a=${a}]`);
   let stream;
   const stopCam = () => stream?.getTracks().forEach(t=>t.stop());
   onCleanup(stopCam);
   btn('x').onclick = ()=>{ stopCam(); m.remove(); };
-  try{ stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); v.srcObject = stream; }
-  catch(e){ toast('📷 Camera not available (needs HTTPS or localhost)'); m.remove(); return; }
+  try{ stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false}); v.srcObject = stream; }
+  catch(e){ toast('Camera not available (needs HTTPS or localhost)'); m.remove(); return; }
+  const mode = shot => { img.classList.toggle('hidden',!shot); v.classList.toggle('hidden',shot); btn('snap').classList.toggle('hidden',shot); btn('again').classList.toggle('hidden',!shot); btn('send').classList.toggle('hidden',!shot); };
   btn('snap').onclick = ()=>{
-    const c = document.createElement('canvas'), w=480, h=Math.round(480*(v.videoHeight||640)/(v.videoWidth||480));
-    c.width=w; c.height=h; const x=c.getContext('2d'); x.translate(w,0); x.scale(-1,1); x.drawImage(v,0,0,w,h);
-    img.src = c.toDataURL('image/jpeg',.75);
-    img.classList.remove('hidden'); v.classList.add('hidden');
-    btn('snap').classList.add('hidden'); btn('again').classList.remove('hidden'); btn('send').classList.remove('hidden');
+    const c = document.createElement('canvas'), w = 480, h = Math.round(480*(v.videoHeight||640)/(v.videoWidth||480));
+    c.width = w; c.height = h; const x = c.getContext('2d'); x.translate(w,0); x.scale(-1,1); x.drawImage(v,0,0,w,h);
+    img.src = c.toDataURL('image/jpeg',.75); mode(true);
   };
-  btn('again').onclick = ()=>{ img.classList.add('hidden'); v.classList.remove('hidden'); btn('snap').classList.remove('hidden'); btn('again').classList.add('hidden'); btn('send').classList.add('hidden'); };
-  btn('send').onclick = ()=>{ send(id,{type:'photo', data:img.src}); stopCam(); m.remove(); };
+  btn('again').onclick = ()=>mode(false);
+  btn('send').onclick = ()=>{ send(id, {type:'photo', data:img.src}); stopCam(); m.remove(); };
 }
 
 /* =========================================================================
-   6. CALLS — outgoing / incoming / in-call with filters
-   (prototype: your camera is real, the other person is simulated)
+   4. INCOMING CALL — design page 4
    ========================================================================= */
-async function startCam(video, facing){
-  try{
-    const s = useStream(await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false}));
-    video.srcObject = s; return s;
-  }catch(e){ return null; }
-}
-
-function call(id, dir){
-  const c = getContact(id); if(!c) return go(homeScreen());
-  if(isQuiet() && S.role!=='family'){ toast('🌙 Quiet hours'); return go(home); }
-  let facing='user', stream=null, muted=false, camOff=false, secs=0;
-  app.innerHTML = `<section class="screen call">
-    <div class="remote"><span class="av xl ${dir==='out'?'pulse':''}" style="background:${c.color}">${c.emoji}</span>
-      <b>${esc(c.name)}</b><small id="cs">${dir==='out'?'Calling…':'Connected'}</small></div>
-    <div class="self"><video id="v" class="mirror" autoplay playsinline muted></video><span class="fx" id="fx"></span></div>
-    <div class="filters hidden" id="filters">${FILTERS.map(f=>`<button data-f="${f.id}" class="${f.id?'':'on'}">${f.icon}</button>`).join('')}</div>
-    <div class="call-ctl">
-      <button class="round" id="mute" aria-label="Mute">🎙️</button>
-      <button class="round" id="cam" aria-label="Camera">📷</button>
-      <button class="round" id="flip" aria-label="Flip camera">🔄</button>
-      ${S.settings.filters?'<button class="round" id="fbtn" aria-label="Filters">🦄</button>':''}
-      <button class="round play" id="lp">🎲 Let's play!</button>
-      <button class="round end" id="end" aria-label="End call"><span>📞</span></button>
-    </div></section>`;
-  const v = $('#v');
-  const cam = async () => { stream?.getTracks().forEach(t=>t.stop()); stream = await startCam(v, facing);
-    if(!stream && !$('.nocam')) $('.self').insertAdjacentHTML('beforeend','<div class="nocam">🙈</div>'); };
-  cam();
-  log(`Call ${dir==='out'?'to':'from'} ${c.name}`);
-  const connected = () => { $('#cs').textContent='00:00'; $('.remote .av').classList.remove('pulse');
-    const iv=setInterval(()=>{ secs++; const el=$('#cs'); if(el) el.textContent=`${String(secs/60|0).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`; },1000);
-    onCleanup(()=>clearInterval(iv)); };
-  dir==='out' ? later(connected, 2200) : connected();
-
-  $('#end').onclick = ()=>go(id==='child'?familyView:person, id);
-  $('#mute').onclick = e=>{ muted=!muted; e.currentTarget.classList.toggle('off',muted); e.currentTarget.textContent = muted?'🔇':'🎙️'; };
-  $('#cam').onclick  = e=>{ camOff=!camOff; e.currentTarget.classList.toggle('off',camOff); stream?.getVideoTracks().forEach(t=>t.enabled=!camOff); };
-  $('#flip').onclick = ()=>{ facing = facing==='user'?'environment':'user'; v.classList.toggle('mirror', facing==='user'); cam(); };
-  $('#lp').onclick   = ()=>go(game, id, true);
-  $('#fbtn') && ($('#fbtn').onclick = ()=>$('#filters').classList.toggle('hidden'));
-  $$('#filters button').forEach(b=>b.onclick=()=>{
-    $$('#filters button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-    const f = FILTERS.find(x=>String(x.id)===b.dataset.f), fx=$('#fx');
-    fx.textContent = f?.fx||''; fx.className = 'fx '+(f?.pos||'');
-    // Real app: MediaPipe Face Landmarker positions this on the face, draws to a canvas,
-    // and canvas.captureStream() replaces the outgoing WebRTC video track.
-  });
-}
-
 function incoming(id){
-  const c = getContact(id);
-  app.innerHTML = `<section class="screen incoming" style="--c:${c.color}">
-    <div></div>
-    <div><span class="av xl ringing" style="background:${c.color};display:grid;margin:0 auto 16px">${c.emoji}</span><h2>${esc(c.name)}</h2></div>
-    <button class="answer" id="ans" aria-label="Answer">📞</button></section>`;
+  const c = getContact(id), p = pal(c.color);
+  app.innerHTML = `<section class="screen incoming" style="background:${p.c}">
+    <span class="blob" style="width:360px;height:360px;left:-140px;top:-200px;background:rgba(255,255,255,.16)"></span>
+    <span class="blob" style="width:300px;height:300px;right:-140px;bottom:140px;background:rgba(255,255,255,.16)"></span>
+    <div class="mid"><span class="halo">${avatar('#fff','xl')}</span><h2>${esc(c.name)}</h2></div>
+    <button class="pill c-white b3d" id="ans" style="font-size:40px;min-height:120px"><span class="ib" style="background:var(--green);width:96px;height:96px;min-width:96px;--is:50px">${icon('video')}</span>Answer</button>
+  </section>`;
   const stopRing = ringtone(); onCleanup(stopRing);
   later(()=>say(`${c.name} is calling!`), 300);
   $('#ans').onclick = ()=>go(call, id, 'in');
@@ -844,145 +965,304 @@ function ringtone(){
 }
 
 /* =========================================================================
-   7. SHARED GAMES (prototype: the partner is simulated)
+   5. IN-CALL — design page 5 (your camera is real, the other side simulated)
    ========================================================================= */
-function game(id, inCall){
+function call(id, dir){
   const c = getContact(id); if(!c) return go(homeScreen());
-  if(isQuiet() && S.role!=='family'){ toast('🌙 Quiet hours'); return go(home); }
-  const backTo = () => inCall ? go(call,id,'in') : go(id==='child'?familyView:person, id);
-  app.innerHTML = `<section class="screen game">
-    <div class="topbar"><button class="round" id="back">⬅️</button>
-      ${inCall?`<div class="mini"><span class="av sm" style="background:${c.color}">${c.emoji}</span><video id="mv" autoplay playsinline muted></video></div>`:''}</div>
-    <div id="stage" style="display:flex;flex-direction:column;gap:14px;flex:1">
-      <h2 style="text-align:center">Play with ${esc(c.name)}!</h2>
-      <div class="game-pick">
-        <button class="gtile" data-g="ttt"><span>🐱</span>Tic-tac-toe</button>
-        <button class="gtile" data-g="match"><span>🃏</span>Match pairs</button>
-        <button class="gtile" data-g="draw"><span>🎨</span>Draw together</button>
-      </div></div></section>`;
-  if(inCall) startCam($('#mv'),'user');
-  say('Pick a game!');
-  $('#back').onclick = backTo;
-  $$('.gtile').forEach(b=>b.onclick=()=>{
-    const g = b.dataset.g, stage=$('#stage');
-    // invite → accept handshake (real app: sent over the WebSocket, partner sees accept/decline)
-    stage.insertAdjacentHTML('beforeend',`<div class="overlay-msg" id="wait"><span class="av pulse" style="background:${c.color}">${c.emoji}</span>Waiting for ${esc(c.name)}…</div>`);
-    later(()=>{
-      $('#wait').innerHTML = `<span class="av" style="background:${c.color}">${c.emoji}</span>${esc(c.name)} is here! 🎉`;
-      say(`${c.name} is here!`);
-      later(()=>{ stage.innerHTML=''; log(`Played ${g} with ${c.name}`); ({ttt, match, draw:drawTogether})[g](stage, c, id); }, 900);
-    }, 1400);
+  if(blockedByQuiet()) return;
+  const p = pal(c.color);
+  let facing = 'user', stream = null, muted = false, secs = 0;
+  app.innerHTML = `<section class="screen call">
+    <div class="stage" style="background:${p.l}">
+      <div class="namepill">${esc(c.name)}<small id="cs">${dir==='out'?'Calling…':'0:00'}</small></div>
+      <div class="remote ${dir==='out'?'pulse':''}">${BIG_SIL}</div>
+      <div class="selfview"><div class="ph">${SIL}</div><video id="v" class="mirror hidden" autoplay playsinline muted></video><div class="fx" id="fx"></div></div>
+      <button class="pill letsplay c-yellow b3d" id="lp"><span class="ib">${icon('dice')}</span>Let's play!</button>
+    </div>
+    <div class="ctl-panel">
+      ${S.settings.filters?`<div class="frow">${FILTERS.map((f,i)=>`<button class="ftile c-${f.col}${i?'':' on'}" data-i="${i}" aria-label="${f.id||'No filter'}">${icon(f.icon)}</button>`).join('')}</div>`:''}
+      <div class="crow">
+        <button class="cbtn lg c-white b3d" id="mute" aria-label="Mute">${icon('mic')}</button>
+        <button class="cbtn xl c-red b3d" id="end" aria-label="End call">${icon('hangup')}</button>
+        <button class="cbtn lg c-white b3d" id="flip" aria-label="Flip camera">${icon('flip')}</button>
+      </div>
+    </div></section>`;
+  const v = $('#v');
+  const cam = async () => { stream?.getTracks().forEach(t=>t.stop()); stream = await startCam(v, facing); };
+  cam();
+  log(`Call ${dir==='out'?'to':'from'} ${c.name}`);
+  const connected = () => {
+    $('.remote').classList.remove('pulse'); $('#cs').textContent = '0:00';
+    const iv = setInterval(()=>{ secs++; const el = $('#cs'); if(el) el.textContent = mmss(secs); }, 1000);
+    onCleanup(()=>clearInterval(iv));
+  };
+  dir==='out' ? later(connected, 2200) : connected();
+
+  $('#end').onclick  = backFrom(id);
+  $('#mute').onclick = e=>{ muted = !muted; const b = e.currentTarget; b.classList.toggle('on', muted); b.innerHTML = icon(muted?'micOff':'mic'); };
+  $('#flip').onclick = ()=>{ facing = facing==='user'?'environment':'user'; v.classList.toggle('mirror', facing==='user'); cam(); };
+  $('#lp').onclick   = ()=>go(picker, id, true);
+  $$('.ftile').forEach(b=>b.onclick=()=>{
+    $$('.ftile').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const f = FILTERS[+b.dataset.i], fx = $('#fx');
+    fx.innerHTML = f.id ? FX[f.id] : ''; fx.className = 'fx ' + (f.pos||'');
+    // Real app: MediaPipe Face Landmarker places this on the face, draws it onto a canvas,
+    // and canvas.captureStream() replaces the outgoing WebRTC video track.
   });
 }
 
-const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-function ttt(el, c){
-  let b = Array(9).fill(null), turn='X', over='';
-  const ICON = {X:'🐱', O:'🐶'};
-  const win = w => LINES.some(l=>l.every(i=>b[i]===w));
-  const aiMove = () => {
-    for(const who of ['O','X']) for(const l of LINES){ const v=l.map(i=>b[i]);
-      if(v.filter(x=>x===who).length===2 && v.includes(null) && Math.random()<.7) return l[v.indexOf(null)]; }
-    const free = b.map((v,i)=>v?null:i).filter(i=>i!==null); return pick(free);
-  };
-  const move = (i, w) => {
-    b[i]=w;
-    if(win(w)){ over = w==='X'?'You win! 🎉':`${c.name} wins! 🐶`; say(w==='X'?'You win!':`${c.name} wins!`); if(w==='X') confetti(); }
-    else if(b.every(Boolean)){ over="It's a tie! 🤝"; say("It's a tie!"); }
-    else turn = w==='X'?'O':'X';
-    render();
-    if(!over && turn==='O') later(()=>move(aiMove(),'O'), 900);
-  };
-  const render = () => {
-    el.innerHTML = `<div class="turn">${over?'':turn==='X'?'Your turn! 🐱':`${esc(c.name)}'s turn… 🐶`}</div>
-      <div class="ttt">${b.map((v,i)=>`<button class="cell" data-i="${i}" ${v||over||turn!=='X'?'disabled':''}>${v?ICON[v]:''}</button>`).join('')}</div>
-      ${over?`<div class="over"><b>${esc(over)}</b><button class="btn primary" id="again">🔁 Again</button></div>`:''}`;
-    el.querySelectorAll('.cell').forEach(x=>x.onclick=()=>move(+x.dataset.i,'X'));
-    el.querySelector('#again')?.addEventListener('click',()=>{ b=Array(9).fill(null); turn='X'; over=''; render(); });
-  };
-  render(); say('Your turn!');
+/* =========================================================================
+   6. GAMES — picker (page 6), invite (page 7), draw (8), puzzle (9)
+   ========================================================================= */
+const GAMES = {
+  draw:  {label:'Draw',        icon:'pencil', col:'pink',   bg:'#ffe0ec', run:drawTogether},
+  puzzle:{label:'Puzzle',      icon:'puzzle', col:'blue',   bg:'#dfeefc', run:puzzle},
+  match: {label:'Match',       icon:'cards',  col:'green',  bg:'#dcf5ea', run:match},
+  ttt:   {label:'Tic-tac-toe', icon:'ttt',    col:'purple', bg:'#ece4ff', run:ttt},
+};
+
+function picker(id, inCall){
+  const c = getContact(id); if(!c) return go(homeScreen());
+  if(blockedByQuiet()) return;
+  const p = pal(c.color);
+  app.innerHTML = `<section class="screen" style="background:#fff1cc">
+    <div class="ghead"><button class="cbtn c-white b3d" id="back" aria-label="Back">${icon('back')}</button>
+      ${avatar(p.c,'md')}<span class="cbtn c-yellow" style="background:var(--c)">${icon('dice')}</span></div>
+    ${Object.entries(GAMES).map(([k,G])=>`<button class="pill gcard c-${G.col} b3d" data-g="${k}"><span class="ib">${icon(G.icon)}</span>${G.label}</button>`).join('')}
+  </section>`;
+  say('Pick a game!');
+  $('#back').onclick = inCall ? ()=>go(call, id, 'in') : backFrom(id);
+  $$('.gcard').forEach(b=>b.onclick=()=>{ say(GAMES[b.dataset.g].label); go(invite, id, b.dataset.g, 'out', inCall); });
 }
 
-function match(el, c){
-  const deck = shuffle(['🐶','🐱','🐰','🦊','🐼','🐸'].flatMap(a=>[a,a]));
-  let open=[], done=new Set(), turn='me', busy=false, score={me:0,them:0};
-  const render = () => {
-    el.innerHTML = `<div class="score"><span>🧒 ${'⭐'.repeat(score.me)||'·'}</span><span>${c.emoji} ${'⭐'.repeat(score.them)||'·'}</span></div>
-      <div class="turn">${done.size===12?'':turn==='me'?'Your turn!':`${esc(c.name)}'s turn…`}</div>
-      <div class="cards">${deck.map((a,i)=>{ const o=open.includes(i)||done.has(i);
-        return `<button class="card ${o?'open':''} ${done.has(i)?'done':''}" data-i="${i}" ${o||busy||turn!=='me'?'disabled':''}><span>${o?a:'❓'}</span></button>`; }).join('')}</div>
-      ${done.size===12?`<div class="over"><b>All found! 🎉</b><button class="btn primary" id="again">🔁 Again</button></div>`:''}`;
-    el.querySelectorAll('.card').forEach(x=>x.onclick=()=>flip(+x.dataset.i));
-    el.querySelector('#again')?.addEventListener('click',()=>match(el,c));
-  };
-  const flip = i => {
-    open.push(i); render();
-    if(open.length<2) return;
-    busy=true; render();
-    later(()=>{
-      const [x,y]=open;
-      if(deck[x]===deck[y]){ done.add(x); done.add(y); score[turn]++; say(turn==='me'?'Yay! A match!':'Match!'); chime(); }
-      else turn = turn==='me'?'them':'me';
-      open=[]; busy=false; render();
-      if(done.size===12){ confetti(); say('All found! Great job!'); }
-      else if(turn==='them') partner();
-    }, 1000);
-  };
-  const partner = () => {
-    const free = deck.map((_,i)=>i).filter(i=>!done.has(i));
-    const [a,b] = shuffle(free);
-    later(()=>{ open=[a]; render(); later(()=>flip(b), 700); }, 700);
-  };
-  render(); say('Find the matching animals!');
+/* mode 'out' = we invited them and wait; mode 'in' = they invited us (accept / decline) */
+function invite(id, g, mode, inCall){
+  const c = getContact(id), p = pal(c.color), G = GAMES[g];
+  app.innerHTML = `<section class="screen invite" style="background:var(--yellow)">
+    <span class="blob" style="width:300px;height:300px;right:-90px;top:-120px;background:rgba(255,255,255,.22)"></span>
+    <span class="blob" style="width:260px;height:260px;left:-120px;top:52%;background:rgba(255,255,255,.22)"></span>
+    <div></div>
+    <div class="mid"><span class="inv-av ${mode==='out'?'pulse':''}">${avatar(p.c,'xl')}<span class="badge c-${G.col}">${icon(G.icon)}</span></span><h2>${esc(c.name)}</h2></div>
+    <div class="irow">
+      <button class="cbtn lg c-white b3d" id="no" aria-label="${mode==='in'?'No thanks':'Cancel'}">${icon('x')}</button>
+      ${mode==='in'
+        ? `<button class="pill c-green b3d center" id="yes">${icon('check')}Play!</button>`
+        : `<div class="pill c-white b3d center" aria-label="Waiting"><span class="dots3"><i></i><i></i><i></i></span></div>`}
+    </div></section>`;
+  if(mode==='out'){
+    // Real app: invite goes over the WebSocket; the other side sees this same screen in "in" mode.
+    $('#no').onclick = ()=>go(picker, id, inCall);
+    later(()=>{ say(`${c.name} is here!`); go(playGame, id, g, inCall); }, 1800);
+  } else {
+    chime(); later(()=>say(`${c.name} wants to play!`), 300);
+    $('#no').onclick = ()=>go(home);
+    $('#yes').onclick = ()=>go(playGame, id, g, false);
+    later(()=>go(home), 30000);
+  }
 }
 
+function playGame(id, g, inCall){
+  const c = getContact(id), p = pal(c.color), G = GAMES[g];
+  app.innerHTML = `<section class="screen" style="background:${G.bg}">
+    <div class="ghead"><button class="cbtn c-white b3d" id="back" aria-label="Back">${icon('back')}</button><span class="sp"></span>
+      ${avatar(p.c,'md them')}${avatar(meRing(c),'md me',false, inCall?'<video autoplay playsinline muted></video>':SIL)}</div>
+    <div class="gstage" id="stage"></div></section>`;
+  if(inCall) startCam($('.aw.me video'));
+  $('#back').onclick = ()=>go(picker, id, inCall);
+  log(`Played ${G.label} with ${c.name}`);
+  G.run($('#stage'), c, id);
+}
+function setTurn(who){
+  $('.ghead .aw.me')?.classList.toggle('active', who==='me');
+  $('.ghead .aw.them')?.classList.toggle('active', who==='them');
+}
+
+/* ----- Draw together ----- */
 function drawTogether(el, c, id){
-  let color = INK[0];
-  el.innerHTML = `<div class="draw-wrap"><canvas></canvas><span class="partner" id="pc" style="left:-50px;top:-50px">${c.emoji}</span></div>
-    <div class="palette">${palette()}</div>
-    <div class="palette"><button class="round" id="clr">🗑️</button><button class="btn primary" id="save">💌 Send picture</button></div>`;
-  const cv = el.querySelector('canvas'), pad = drawPad(cv, ()=>color), pc = el.querySelector('#pc');
-  bindPalette(el, x=>color=x);
-  el.querySelector('#clr').onclick = ()=>pad.clear();
-  el.querySelector('#save').onclick = ()=>{ send(id,{type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); confetti(); toast(`Sent to ${c.name}! 💌`); };
-  // simulated partner strokes (real app: strokes arrive as point lists over the WebSocket)
-  const pcolor = pick(INK.slice(1));
+  const b = drawUI(el, cv=>{ send(id, {type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); confetti(); say(`Sent to ${c.name}!`); });
+  el.querySelector('.sheet').insertAdjacentHTML('beforeend', `<span class="pcur" style="border-color:${pal(c.color).c}"></span>`);
+  const cur = el.querySelector('.pcur'), pcol = pick(INK.slice(1));
+  // Simulated partner. Real app: their strokes arrive as point lists over the WebSocket.
   const stroke = () => {
-    let x=Math.random()*pad.w, y=Math.random()*pad.h, a=Math.random()*6.28, steps=0;
+    let x = 20+Math.random()*(b.W-40), y = 20+Math.random()*(b.H-40), a = Math.random()*6.28, n = 0;
+    const s = b.begin({x,y}, pcol, 9, 'them');
     const iv = setInterval(()=>{
-      a += (Math.random()-.5)*.8; const nx=Math.max(5,Math.min(pad.w-5,x+Math.cos(a)*9)), ny=Math.max(5,Math.min(pad.h-5,y+Math.sin(a)*9));
-      pad.line({x,y},{x:nx,y:ny},pcolor,8); x=nx; y=ny; pc.style.left=x+'px'; pc.style.top=y+'px';
-      if(++steps>45) clearInterval(iv);
+      a += (Math.random()-.5)*.8;
+      x = Math.max(6, Math.min(b.W-6, x+Math.cos(a)*9)); y = Math.max(6, Math.min(b.H-6, y+Math.sin(a)*9));
+      b.extend(s, {x,y}); cur.style.left = x+'px'; cur.style.top = y+'px';
+      if(++n>45) clearInterval(iv);
     }, 30);
     onCleanup(()=>clearInterval(iv));
-    later(stroke, 3500+Math.random()*3000);
+    later(stroke, 4000+Math.random()*3000);
   };
   later(stroke, 1500);
   say(`Draw with ${c.name}!`);
 }
 
+/* ----- Shared jigsaw puzzle ----- */
+function puzzle(el, c){
+  const all = [...Array(9).keys()];
+  const missing = shuffle(all).slice(0,4);
+  const placed = new Set(all.filter(i=>!missing.includes(i)));
+  let sel = null, dragging = false;
+  const bg = i => `background-image:url('${SCENE_URL}');background-position:${(i%3)*50}% ${Math.floor(i/3)*50}%`;
+  const left = () => missing.filter(i=>!placed.has(i));
+
+  const render = () => {
+    el.innerHTML = `<div class="pz-board"><div class="pz-grid">${all.map(i=>placed.has(i)
+        ? `<div class="pz-cell" style="${bg(i)}"></div>`
+        : `<div class="pz-cell pz-slot" data-slot="${i}"></div>`).join('')}</div></div>
+      <div class="pz-tray">${left().length
+        ? left().map(i=>`<button class="piece${sel===i?' sel':''}" data-p="${i}" style="${bg(i)}" aria-label="Puzzle piece"></button>`).join('')
+        : `<span class="bigstar">${icon('star')}</span><button class="cbtn lg c-green b3d" id="again" aria-label="Play again">${icon('undo')}</button>`}</div>`;
+    el.querySelectorAll('[data-slot]').forEach(s=>s.onclick=()=>{ if(sel!==null) tryPlace(sel, +s.dataset.slot, s); });
+    el.querySelectorAll('.piece').forEach(bindPiece);
+    el.querySelector('#again')?.addEventListener('click', ()=>puzzle(el, c));
+  };
+  const place = i => {
+    placed.add(i); sel = null; chime(); render();
+    if(placed.size===9){ confetti(); say('You did it!'); }
+  };
+  const tryPlace = (i, slot, slotEl) => {
+    if(i===slot){ say('Yes!'); place(i); }
+    else { slotEl.classList.remove('wiggle'); void slotEl.offsetWidth; slotEl.classList.add('wiggle'); say('Try another spot'); }
+  };
+  // drag a piece onto the board, or tap a piece then tap a spot
+  function bindPiece(pe){
+    const i = +pe.dataset.p;
+    let start = null, ghost = null;
+    pe.onpointerdown = e => { pe.setPointerCapture(e.pointerId); start = {x:e.clientX, y:e.clientY}; dragging = true; };
+    pe.onpointermove = e => {
+      if(!start) return;
+      if(!ghost && Math.hypot(e.clientX-start.x, e.clientY-start.y) > 8){
+        const r = pe.getBoundingClientRect();
+        ghost = document.createElement('div'); ghost.className = 'ghost';
+        ghost.style.cssText += `${bg(i)};width:${r.width}px;height:${r.height}px`;
+        document.body.appendChild(ghost); pe.style.opacity = '.3';
+      }
+      if(ghost){ ghost.style.left = e.clientX+'px'; ghost.style.top = e.clientY+'px'; }
+    };
+    pe.onpointerup = pe.onpointercancel = e => {
+      dragging = false;
+      if(!start) return; start = null;
+      if(ghost){
+        ghost.remove(); ghost = null; pe.style.opacity = '';
+        const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-slot]');
+        if(slot) tryPlace(i, +slot.dataset.slot, slot);
+      } else { sel = sel===i ? null : i; render(); }
+    };
+  }
+  onCleanup(()=>document.querySelectorAll('.ghost').forEach(g=>g.remove()));
+  // Simulated partner helps with one piece now and then (never the last one)
+  const partner = () => later(()=>{
+    const l = left();
+    if(!dragging && l.length>1){
+      const i = pick(l); el.querySelector(`[data-p="${i}"]`)?.classList.add('partner');
+      later(()=>{ if(!dragging && !placed.has(i)){ place(i); say(`${c.name} helped!`); } partner(); }, 900);
+    } else if(placed.size<9) partner();
+  }, 8000);
+  render(); partner(); say('Put the pieces in the picture!');
+}
+
+/* ----- Match pairs (shapes + colours, spoken aloud) ----- */
+const SHAPES = [
+  {n:'red circle',     svg:'<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ff6b4a"/></svg>'},
+  {n:'blue square',    svg:'<svg viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" rx="12" fill="#3f8fe0"/></svg>'},
+  {n:'yellow triangle',svg:'<svg viewBox="0 0 100 100"><path d="M50 16 86 80H14z" fill="#ffad1f" stroke="#ffad1f" stroke-width="8" stroke-linejoin="round"/></svg>'},
+  {n:'pink heart',     svg:'<svg viewBox="0 0 100 100"><path d="M50 86C22 66 10 51 10 35 10 22 20 13 32 13c8 0 14 5 18 11 4-6 10-11 18-11 12 0 22 9 22 22 0 16-12 31-40 51z" fill="#ff5c8a"/></svg>'},
+  {n:'purple star',    svg:`<svg viewBox="0 0 100 100"><path d="${starPath(50,53,40,18)}" fill="#8c6fe6" stroke="#8c6fe6" stroke-width="5" stroke-linejoin="round"/></svg>`},
+  {n:'green diamond',  svg:'<svg viewBox="0 0 100 100"><path d="M50 12 86 50 50 88 14 50z" fill="#34a87a" stroke="#34a87a" stroke-width="6" stroke-linejoin="round"/></svg>'},
+];
+function match(el, c){
+  const deck = shuffle([...SHAPES.keys()].flatMap(k=>[k,k]));
+  let open = [], done = new Set(), turn = 'me', busy = false, score = {me:0, them:0};
+  const stars = n => n ? Array.from({length:n},()=>icon('star')).join('') : '';
+  const render = () => {
+    setTurn(done.size===12 ? null : turn);
+    el.innerHTML = `<div class="score"><span>${avatar(meRing(c),'sm')}${stars(score.me)}</span><span>${avatar(pal(c.color).c,'sm')}${stars(score.them)}</span></div>
+      <div class="cards">${deck.map((k,i)=>{ const o = open.includes(i)||done.has(i);
+        return `<button class="card c-purple ${o?'open':'b3d'} ${done.has(i)?'done':''}" data-i="${i}" ${o||busy||turn!=='me'?'disabled':''} aria-label="Card">${o?SHAPES[k].svg:icon('star')}</button>`; }).join('')}</div>
+      ${done.size===12?`<div class="over"><span class="bigstar">${icon('star')}</span><button class="cbtn lg c-green b3d" id="again" aria-label="Play again">${icon('undo')}</button></div>`:''}`;
+    el.querySelectorAll('.card').forEach(x=>x.onclick=()=>flip(+x.dataset.i));
+    el.querySelector('#again')?.addEventListener('click', ()=>match(el, c));
+  };
+  const flip = i => {
+    open.push(i); if(turn==='me') say(SHAPES[deck[i]].n); render();
+    if(open.length<2) return;
+    busy = true; render();
+    later(()=>{
+      const [x,y] = open;
+      if(deck[x]===deck[y]){ done.add(x); done.add(y); score[turn]++; chime(); say(turn==='me'?'Yay! A match!':'Match!'); }
+      else turn = turn==='me' ? 'them' : 'me';
+      open = []; busy = false; render();
+      if(done.size===12){ confetti(); say('All found! Great job!'); }
+      else if(turn==='them') partnerTurn();
+    }, 1100);
+  };
+  const partnerTurn = () => {
+    const [a,b] = shuffle(deck.map((_,i)=>i).filter(i=>!done.has(i)));
+    later(()=>{ open = [a]; render(); later(()=>flip(b), 700); }, 700);
+  };
+  render(); say('Find the matching shapes!');
+}
+
+/* ----- Tic-tac-toe ----- */
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const MARK = {
+  me:'<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="28" fill="none" stroke="#3f8fe0" stroke-width="14"/></svg>',
+  them:'<svg viewBox="0 0 100 100"><path d="M26 26 74 74M74 26 26 74" stroke="#ff6b4a" stroke-width="14" stroke-linecap="round"/></svg>',
+};
+function ttt(el, c){
+  let b = Array(9).fill(null), turn = 'me', over = null;
+  const win = w => LINES.some(l=>l.every(i=>b[i]===w));
+  const aiMove = () => {
+    for(const who of ['them','me']) for(const l of LINES){ const v = l.map(i=>b[i]);
+      if(v.filter(x=>x===who).length===2 && v.includes(null) && Math.random()<.7) return l[v.indexOf(null)]; }
+    return pick(b.map((v,i)=>v?null:i).filter(i=>i!==null));
+  };
+  const move = (i, w) => {
+    b[i] = w;
+    if(win(w)){ over = w; say(w==='me'?'You win!':`${c.name} wins!`); if(w==='me') confetti(); }
+    else if(b.every(Boolean)){ over = 'tie'; say("It's a tie!"); }
+    else turn = w==='me' ? 'them' : 'me';
+    render();
+    if(!over && turn==='them') later(()=>move(aiMove(), 'them'), 900);
+  };
+  const render = () => {
+    setTurn(over ? null : turn);
+    el.innerHTML = `<div class="ttt">${b.map((v,i)=>`<button class="cell" data-i="${i}" ${v||over||turn!=='me'?'disabled':''} aria-label="Square">${v?MARK[v]:''}</button>`).join('')}</div>
+      ${over?`<div class="over">${over==='me'?`<span class="bigstar">${icon('star')}</span>`:''}<button class="cbtn lg c-green b3d" id="again" aria-label="Play again">${icon('undo')}</button></div>`:''}`;
+    el.querySelectorAll('.cell').forEach(x=>x.onclick=()=>move(+x.dataset.i, 'me'));
+    el.querySelector('#again')?.addEventListener('click', ()=>{ b = Array(9).fill(null); turn = 'me'; over = null; render(); });
+  };
+  render(); say('Your turn!');
+}
+
 /* =========================================================================
-   8. PARENT DASHBOARD
+   PARENT DASHBOARD
    ========================================================================= */
 function parent(){
   const s = S.settings;
+  let newColor = COLOR_KEYS[S.contacts.length % COLOR_KEYS.length];
   const tog = (k,title,sub) => `<label class="tog"><span><b>${title}</b><small>${sub}</small></span><input type="checkbox" data-k="${k}" ${s[k]?'checked':''}><i></i></label>`;
-  const fmt = t => new Date(t).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const fmt = t => new Date(t).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
   app.innerHTML = `<section class="screen adult">
-    <header class="adult-h"><b>⚙️ Parent area</b><button class="btn small primary" id="done">Done</button></header>
+    <header class="adult-h"><span class="cbtn c-coral" style="background:var(--c);width:52px;height:52px;min-width:52px;--is:26px">${icon('lock')}</span>
+      <b>Parent area</b><span class="sp"></span><button class="btn c-green b3d" id="done">${icon('check')}Done</button></header>
 
     <div class="panel"><h3>Family contacts</h3><p>Only these people can reach ${esc(S.childName||'your child')}.</p>
-      <div id="clist">${S.contacts.map((c,i)=>`<div class="row-item" style="padding:6px 0">
-        <span class="av sm" style="background:${c.color}">${c.emoji}</span><div class="grow"><b>${esc(c.name)}</b></div>
-        <button class="mini-btn" data-up="${i}" ${i?'':'disabled'}>⬆️</button><button class="mini-btn" data-dn="${i}" ${i<S.contacts.length-1?'':'disabled'}>⬇️</button>
-        <button class="mini-btn" data-rm="${i}">🗑️</button></div>`).join('')}</div>
-      <div class="add"><select id="ae">${EMOJIS.map(e=>`<option>${e}</option>`).join('')}</select>
-        <input id="an" class="field sm" maxlength="20" placeholder="Name"><button class="btn small" id="add">Add</button></div></div>
+      ${S.contacts.map((c,i)=>`<div class="prow">${avatar(pal(c.color).c,'sm')}<span class="grow">${esc(c.name)}</span>
+        <button class="mini-btn" data-up="${i}" ${i?'':'disabled'} aria-label="Move up">${icon('up')}</button>
+        <button class="mini-btn" data-dn="${i}" ${i<S.contacts.length-1?'':'disabled'} aria-label="Move down">${icon('down')}</button>
+        <button class="mini-btn" data-rm="${i}" aria-label="Remove">${icon('trash')}</button></div>`).join('')}
+      <input id="an" class="field sm" maxlength="20" placeholder="New contact name">
+      <div class="swatches" id="nc">${COLOR_KEYS.map(k=>`<button class="c-${k}${k===newColor?' on':''}" data-k="${k}" aria-label="${k}"></button>`).join('')}</div>
+      <button class="btn c-white b3d" id="add">${icon('plus')}Add contact</button></div>
 
     <div class="panel"><h3>Invite a family member</h3><p>Create a one-time code and send it to them. They type it on their own phone.</p>
-      <button class="btn small" id="inv">➕ Create invite code</button>
-      ${S.invites.slice(-4).reverse().map(i=>`<div class="row-item" style="padding:4px 0"><span class="code-chip">${i.code}</span>
-        <div class="grow"><small>${i.used?`Used by ${esc(i.by||'someone')}`:'Not used yet'}</small></div></div>`).join('')}</div>
+      <button class="btn c-white b3d" id="inv">${icon('mail')}Create invite code</button>
+      ${S.invites.slice(-4).reverse().map(i=>`<div class="prow"><span class="code-chip">${i.code}</span>
+        <span class="grow muted">${i.used?`Used by ${esc(i.by||'someone')}`:'Not used yet'}</span></div>`).join('')}</div>
 
     <div class="panel"><h3>Settings</h3>
       ${tog('typing','Text typing','Off until she can read and write. No links, ever.')}
@@ -991,46 +1271,54 @@ function parent(){
       <div class="times"><input type="time" id="qf" value="${s.quietFrom}"> to <input type="time" id="qt" value="${s.quietTo}"></div></div>
 
     <div class="panel"><h3>Recent activity</h3>
-      <ul class="act-list">${S.activity.length?S.activity.map(a=>`<li><span>${esc(a.text)}</span><time>${fmt(a.t)}</time></li>`).join(''):'<li>Nothing yet</li>'}</ul></div>
+      <ul class="act-list">${S.activity.length ? S.activity.map(a=>`<li><span>${esc(a.text)}</span><time>${fmt(a.t)}</time></li>`).join('') : '<li>Nothing yet</li>'}</ul></div>
 
-    <div class="panel"><h3>Security</h3><button class="btn small" id="cpin">🔑 Change PIN</button></div>
+    <div class="panel"><h3>Security</h3><button class="btn c-white b3d" id="cpin">${icon('key')}Change PIN</button></div>
 
-    <div class="panel demo"><h3>🧪 Prototype tools</h3><p>Pretend a family member does something.</p>
-      <select id="who" class="field sm">${S.contacts.map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('')}</select>
-      <div class="btns"><button class="btn small" id="simcall">📞 Incoming call</button><button class="btn small" id="simmsg">💬 New message</button>
-      <button class="btn small danger" id="reset">Reset prototype</button></div></div>
+    <div class="panel demo"><h3>Prototype tools</h3><p>Pretend a family member does something.</p>
+      <select id="who" class="field sm">${S.contacts.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+      <div class="wrap">
+        <button class="btn c-white b3d" id="simcall">${icon('phone')}Incoming call</button>
+        <button class="btn c-white b3d" id="simmsg">${icon('message')}New message</button>
+        <button class="btn c-white b3d" id="siminv">${icon('dice')}Game invite</button>
+        <button class="btn c-red b3d" id="reset">${icon('trash')}Reset</button>
+      </div></div>
   </section>`;
 
   $('#done').onclick = ()=>go(home);
-  $$('[data-k]').forEach(x=>x.onchange=()=>{ s[x.dataset.k]=x.checked; save(); });
-  $('#qf').onchange = e=>{ s.quietFrom=e.target.value; save(); };
-  $('#qt').onchange = e=>{ s.quietTo=e.target.value; save(); };
-  const swap = (i,j)=>{ [S.contacts[i],S.contacts[j]]=[S.contacts[j],S.contacts[i]]; save(); go(parent); };
+  $$('[data-k]').forEach(x=>{ if(x.type==='checkbox') x.onchange=()=>{ s[x.dataset.k] = x.checked; save(); }; });
+  $('#qf').onchange = e=>{ s.quietFrom = e.target.value; save(); };
+  $('#qt').onchange = e=>{ s.quietTo = e.target.value; save(); };
+  $$('#nc button').forEach(b=>b.onclick=()=>{ $$('#nc button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); newColor = b.dataset.k; });
+  const swap = (i,j) => { [S.contacts[i], S.contacts[j]] = [S.contacts[j], S.contacts[i]]; save(); go(parent); };
   $$('[data-up]').forEach(b=>b.onclick=()=>swap(+b.dataset.up, +b.dataset.up-1));
   $$('[data-dn]').forEach(b=>b.onclick=()=>swap(+b.dataset.dn, +b.dataset.dn+1));
-  $$('[data-rm]').forEach(b=>b.onclick=()=>{ const c=S.contacts[+b.dataset.rm];
-    if(confirm(`Remove ${c.name}? They will no longer be able to reach her.`)){ S.contacts.splice(+b.dataset.rm,1); log(`Removed ${c.name}`); go(parent); } });
-  $('#add').onclick = ()=>{ const n=$('#an').value.trim(); if(!n) return toast('Type a name');
-    S.contacts.push({id:'c'+Date.now(), name:n, emoji:$('#ae').value, color:COLORS[S.contacts.length%COLORS.length]}); log(`Added ${n}`); go(parent); };
+  $$('[data-rm]').forEach(b=>b.onclick=()=>{ const c = S.contacts[+b.dataset.rm];
+    if(confirm(`Remove ${c.name}? They will no longer be able to reach her.`)){ S.contacts.splice(+b.dataset.rm, 1); log(`Removed ${c.name}`); go(parent); } });
+  $('#add').onclick = ()=>{ const n = $('#an').value.trim(); if(!n) return toast('Type a name');
+    S.contacts.push({id:'c'+Date.now(), name:n, color:newColor}); log(`Added ${n}`); go(parent); };
   $('#inv').onclick = ()=>{
-    const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', code=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join('');
-    S.invites.push({code, t:Date.now(), used:false}); log(`Invite code created`); go(parent);
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', code = Array.from(crypto.getRandomValues(new Uint8Array(6)), x=>A[x%A.length]).join('');
+    S.invites.push({code, t:Date.now(), used:false}); log('Invite code created'); go(parent);
   };
-  $('#cpin').onclick = ()=>go(changePin,1,null);
+  $('#cpin').onclick = ()=>go(changePin, 1, null);
   $('#simcall').onclick = ()=>{ if(isQuiet()) return toast('Blocked: quiet hours are on'); go(incoming, $('#who').value); };
-  $('#simmsg').onclick = ()=>{ const id=$('#who').value; (S.messages[id]=S.messages[id]||[]).push({from:'them',type:'sticker',data:pick(REPLIES),t:Date.now()});
-    S.unread[id]=true; save(); toast('Message sent — tap Done to see the red dot'); };
-  $('#reset').onclick = ()=>{ if(confirm('Erase everything in this prototype?')){ try{localStorage.removeItem('familycall')}catch(e){} S=structuredClone(DEFAULT); go(welcome); } };
+  $('#simmsg').onclick = ()=>{ const id = $('#who').value; (S.messages[id] = S.messages[id]||[]).push({from:'them', type:'sticker', data:pick(STICKER_KEYS), t:Date.now()});
+    S.unread[id] = true; save(); toast('Message sent — tap Done to see the dot'); };
+  $('#siminv').onclick = ()=>{ if(isQuiet()) return toast('Blocked: quiet hours are on'); go(invite, $('#who').value, pick(Object.keys(GAMES)), 'in', false); };
+  $('#reset').onclick = ()=>{ if(confirm('Erase everything in this prototype?')){ try{ localStorage.removeItem(STORE); }catch(e){} S = structuredClone(DEFAULT); go(welcome); } };
 }
 
 function changePin(step, first){
-  app.innerHTML = `<section class="screen login center"><div class="lock">🔑</div>
-    <h2>${step===1?'New PIN':'Type it again'}</h2><div id="pp"></div><button class="btn ghost" id="x">Cancel</button></section>`;
+  app.innerHTML = `<section class="screen login center">
+    <span class="lockbig c-yellow" style="background:var(--c)">${icon('key')}</span>
+    <h2>${step===1?'New PIN':'Type it again'}</h2><div id="pp"></div>
+    <button class="cbtn c-white b3d" id="x" aria-label="Cancel" style="margin:0 auto">${icon('x')}</button></section>`;
   $('#x').onclick = ()=>go(parent);
   pinPad($('#pp'), async (v, reset)=>{
-    if(step===1) return go(changePin,2,v);
+    if(step===1) return go(changePin, 2, v);
     if(v!==first){ reset(); return toast("PINs don't match"); }
-    S.pinHash = await hashPin(v); log('PIN changed'); toast('PIN changed ✅'); go(parent);
+    S.pinHash = await hashPin(v); log('PIN changed'); toast('PIN changed'); go(parent);
   });
 }
 
