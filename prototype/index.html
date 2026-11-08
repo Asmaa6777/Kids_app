@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#ffab40">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Family Call</title>
+<style>
+:root{
+  --bg:#fff7ec; --ink:#3b2f4a; --muted:#8a7f99; --card:#ffffff;
+  --pink:#ff8fab; --blue:#4fb3f6; --green:#4cc97f; --orange:#ffab40;
+  --red:#ff5d5d; --purple:#a98be0; --yellow:#ffd54f;
+  --r:28px; --shadow:0 6px 0 rgba(59,47,74,.13);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overscroll-behavior:none;background:var(--bg);color:var(--ink);
+  font-family:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,sans-serif}
+body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+input,select{user-select:text;-webkit-user-select:text;font:inherit;color:inherit}
+#app{height:100dvh;max-width:560px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
+.screen{height:100%;display:flex;flex-direction:column;padding:16px;gap:16px;overflow-y:auto;position:relative}
+.center{align-items:center;justify-content:center;text-align:center}
+.hidden{display:none!important}
+h1,h2,h3{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:disabled{cursor:default}
+
+/* buttons */
+.btn{min-height:64px;border-radius:var(--r);padding:0 24px;font-size:20px;font-weight:800;background:var(--card);
+  box-shadow:var(--shadow);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(59,47,74,.13)}
+.btn.primary{background:var(--orange);color:#fff}
+.btn.small{min-height:48px;font-size:16px;padding:0 18px;border-radius:16px}
+.btn.danger{background:#ffe1e1;color:#b33}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--muted)}
+.round{width:64px;height:64px;min-width:64px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);
+  font-size:30px;display:grid;place-items:center}
+.round:active{transform:translateY(4px)}
+.link{color:var(--muted);text-decoration:underline;font-size:15px;padding:12px}
+
+/* avatars */
+.av{position:relative;display:grid;place-items:center;border-radius:50%;width:100%;aspect-ratio:1;
+  font-size:clamp(48px,14vw,72px);box-shadow:inset 0 -8px 0 rgba(0,0,0,.08)}
+.av.sm{width:48px;min-width:48px;font-size:28px}
+.av.xl{width:min(52vw,220px);font-size:min(28vw,120px)}
+.dot{position:absolute;top:4%;right:4%;width:28px;height:28px;border-radius:50%;background:var(--red);border:4px solid #fff;
+  animation:pop .4s}
+.av.sm .dot{width:16px;height:16px;border-width:3px;top:-2px;right:-2px}
+
+/* login / onboarding */
+.login{justify-content:center;gap:20px;padding:24px}
+.logo{font-size:72px;text-align:center;animation:float 3s ease-in-out infinite}
+.login h1{text-align:center;font-size:38px}
+.login h2{font-size:28px}
+.sub{text-align:center;color:var(--muted);margin:0;font-size:18px}
+.card-btn{display:flex;align-items:center;gap:16px;text-align:left;background:var(--card);border-radius:var(--r);
+  padding:20px;box-shadow:var(--shadow);min-height:96px}
+.card-btn:active{transform:translateY(4px)}
+.card-btn .big{font-size:44px}
+.card-btn b{display:block;font-size:21px}
+.card-btn small{display:block;color:var(--muted);font-size:15px;margin-top:4px}
+.fine{text-align:center;color:var(--muted);font-size:14px;margin:0}
+.step{color:var(--orange);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:13px}
+.field{width:100%;min-height:64px;border-radius:20px;border:3px solid #eadfce;background:#fff;padding:0 20px;font-size:22px;outline:none}
+.field:focus{border-color:var(--orange)}
+.field.code{text-align:center;letter-spacing:.3em;font-weight:800;text-transform:uppercase}
+.field.sm{min-height:48px;font-size:16px;border-radius:14px}
+.emoji-pick{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.emoji-pick button{width:60px;height:60px;border-radius:50%;font-size:32px;background:#fff;box-shadow:var(--shadow)}
+.emoji-pick button.on{outline:4px solid var(--orange)}
+.checklist{display:flex;flex-direction:column;gap:12px}
+.checklist div{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:20px;padding:14px 16px;box-shadow:var(--shadow)}
+.checklist span{font-size:28px}
+.checklist small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.topbar{display:flex;align-items:center;gap:12px}
+
+/* PIN pad */
+.dots{display:flex;gap:16px;justify-content:center;margin:8px 0 16px}
+.dots i{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);opacity:.4}
+.dots i.on{background:var(--ink);opacity:1}
+.shake{animation:shake .4s}
+.pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px;justify-content:center}
+.key{width:76px;height:76px;border-radius:50%;background:#fff;box-shadow:var(--shadow);font-size:28px;font-weight:800}
+.key:active{transform:translateY(4px)}
+.lock{font-size:56px}
+
+/* child home */
+.home-h{display:flex;align-items:center;gap:10px;font-size:26px;padding:4px 8px 0 88px;min-height:56px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;padding:8px 8px 24px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px;border-radius:var(--r);transition:transform .1s}
+.tile:active{transform:scale(.94)}
+.tile .nm{font-size:20px;font-weight:800}
+.tile:disabled{opacity:.35}
+.gate-corner{position:absolute;top:0;left:0;width:84px;height:84px;z-index:5;display:grid;place-items:center}
+.gate-corner svg{opacity:0;transition:opacity .3s}
+.gate-corner.show svg{opacity:.6}
+.sleep{position:absolute;inset:auto 16px 24px 16px;background:#2f2a55;color:#fff;border-radius:var(--r);padding:20px;
+  display:flex;flex-direction:column;align-items:center;font-size:56px}
+.sleep b{font-size:24px}.sleep small{font-size:16px;opacity:.8}
+
+/* person */
+.person{align-items:center;justify-content:space-between;padding-bottom:28px}
+.person .back{align-self:flex-start}
+.hero{display:flex;flex-direction:column;align-items:center;gap:12px}
+.hero h2{font-size:34px}
+.actions{display:flex;gap:16px;width:100%;justify-content:center}
+.act{position:relative;flex:1;max-width:150px;aspect-ratio:1;border-radius:36px;color:#fff;font-size:52px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 8px 0 rgba(0,0,0,.15)}
+.act small{font-size:16px;font-weight:800}
+.act:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.act .dot{top:-6px;right:-6px}
+.green{background:var(--green)}.blue{background:var(--blue)}.orange{background:var(--orange)}
+
+/* chat */
+.chat{padding:0;gap:0}
+.chat-h{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;box-shadow:0 2px 0 #f1e6d6;font-size:22px}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;align-items:flex-end;gap:8px;max-width:88%}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.bubble{background:#fff;border-radius:26px;padding:10px;box-shadow:var(--shadow)}
+.msg.me .bubble{background:#ffe7c4}
+.bubble.sticker{background:none;box-shadow:none;font-size:72px;padding:0;line-height:1}
+.bubble .pic{display:block;max-width:220px;width:100%;border-radius:18px}
+.bubble.text{font-size:20px;padding:14px 18px;user-select:text}
+.voice{display:flex;align-items:center;gap:10px;padding:4px 8px 4px 4px}
+.voice .pp{width:64px;height:64px;border-radius:50%;background:var(--orange);color:#fff;font-size:28px;display:grid;place-items:center}
+.voice .wave{display:flex;gap:3px;align-items:center;height:40px}
+.voice .wave i{width:5px;border-radius:3px;background:#d7b98e}
+.voice.playing .wave i{background:var(--orange);animation:bounce .6s ease-in-out infinite alternate}
+.voice small{color:var(--muted);font-weight:800}
+.composer{display:flex;align-items:center;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff}
+.composer .tool{width:56px;height:56px;min-width:56px;font-size:28px}
+.mic{margin-left:auto;width:92px;height:92px;border-radius:50%;background:var(--red);color:#fff;font-size:44px;
+  box-shadow:0 8px 0 #c64444;touch-action:none;transition:transform .1s}
+.mic.hot{transform:scale(1.15);box-shadow:0 0 0 14px rgba(255,93,93,.25)}
+.textrow{display:flex;gap:8px;padding:8px 16px 0;background:#fff}
+.tray{position:absolute;left:12px;right:12px;bottom:130px;background:#fff;border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.15);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px;z-index:4}
+.tray button{font-size:48px;aspect-ratio:1;border-radius:20px}
+.tray button:active{background:#fff3e0;transform:scale(.9)}
+.rec{position:absolute;left:16px;right:16px;bottom:130px;background:var(--red);color:#fff;border-radius:var(--r);padding:20px;
+  display:flex;align-items:center;gap:16px;z-index:4;font-size:22px}
+.rec .bars{flex:1;display:flex;gap:4px;align-items:center;height:56px}
+.rec .bars i{flex:1;height:100%;background:#fff;border-radius:4px;transform:scaleY(.15);transition:transform .06s}
+
+/* modal (draw / camera) */
+.modal{position:absolute;inset:0;background:rgba(59,47,74,.55);z-index:10;display:flex;flex-direction:column;padding:16px;gap:12px}
+.modal .sheet{flex:1;background:#fff;border-radius:var(--r);overflow:hidden;position:relative}
+.modal canvas,.modal video,.modal img.snap{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}
+.modal .bar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.swatch{width:52px;height:52px;border-radius:50%;border:4px solid #fff;box-shadow:var(--shadow)}
+.swatch.on{transform:scale(1.18);border-color:var(--ink)}
+
+/* call */
+.call{background:#231d33;color:#fff;padding:0}
+.remote{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:26px}
+.remote small{opacity:.7;font-size:16px}
+.pulse{animation:pulse 2s infinite}
+.self{position:absolute;top:16px;right:16px;width:34%;aspect-ratio:3/4;border-radius:22px;overflow:hidden;background:#3d3555;
+  border:3px solid #fff;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.self video{width:100%;height:100%;object-fit:cover;display:block}
+.self video.mirror{transform:scaleX(-1)}
+.self .nocam{position:absolute;inset:0;display:grid;place-items:center;font-size:40px}
+.fx{position:absolute;left:50%;transform:translateX(-50%);font-size:52px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.fx.top{top:2%}.fx.mid{top:30%}.fx.low{top:44%;font-size:30px}
+.filters{display:flex;gap:10px;overflow-x:auto;padding:0 16px 8px}
+.filters button{min-width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.15);font-size:34px}
+.filters button.on{background:var(--orange)}
+.call-ctl{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 16px calc(20px + env(safe-area-inset-bottom))}
+.call-ctl .round{background:rgba(255,255,255,.18);box-shadow:none;color:#fff}
+.call-ctl .round.off{background:#fff;color:var(--ink)}
+.call-ctl .end{background:var(--red)}
+.call-ctl .end span{display:inline-block;transform:rotate(135deg)}
+.call-ctl .play{background:var(--orange);width:auto;padding:0 18px;border-radius:32px;font-size:20px;font-weight:800;gap:6px;display:flex}
+
+/* incoming */
+.incoming{background:radial-gradient(circle at 50% 35%,var(--c),#2f2a55 75%);color:#fff;align-items:center;justify-content:space-around;text-align:center}
+.incoming h2{font-size:36px}
+.ringing{animation:ring 1s infinite}
+.answer{width:140px;height:140px;border-radius:50%;background:var(--green);font-size:64px;box-shadow:0 0 0 0 rgba(76,201,127,.7);animation:halo 1.4s infinite}
+
+/* games */
+.game{gap:12px}
+.game-pick{display:grid;gap:16px}
+.gtile{display:flex;align-items:center;gap:18px;background:#fff;border-radius:var(--r);padding:18px 22px;box-shadow:var(--shadow);font-size:22px;font-weight:800;min-height:96px}
+.gtile span{font-size:46px}
+.gtile:active{transform:translateY(4px)}
+.mini{display:flex;gap:8px;align-items:center;margin-left:auto}
+.mini video{width:64px;height:64px;border-radius:16px;object-fit:cover;transform:scaleX(-1);background:#ddd}
+.turn{text-align:center;font-size:22px;font-weight:800;min-height:32px}
+.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(100%,380px);margin:0 auto}
+.cell{aspect-ratio:1;background:#fff;border-radius:24px;box-shadow:var(--shadow);font-size:56px}
+.cell:not(:disabled):active{transform:scale(.93)}
+.over{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:26px;margin-top:8px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(100%,420px);margin:0 auto}
+.card{aspect-ratio:3/4;border-radius:18px;background:var(--purple);color:#fff;font-size:40px;box-shadow:var(--shadow);transition:transform .25s}
+.card.open{background:#fff;transform:rotateY(180deg)}
+.card.open span{display:inline-block;transform:rotateY(180deg)}
+.card.done{background:#e6f9ee;opacity:.75}
+.score{display:flex;justify-content:center;gap:24px;font-size:20px;font-weight:800}
+.draw-wrap{flex:1;position:relative;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);min-height:280px}
+.draw-wrap canvas{width:100%;height:100%;display:block;touch-action:none}
+.partner{position:absolute;font-size:30px;transition:left .1s linear,top .1s linear;pointer-events:none;transform:translate(-50%,-110%)}
+.palette{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.overlay-msg{position:absolute;inset:0;background:rgba(255,247,236,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:6;font-size:24px;font-weight:800;text-align:center}
+.overlay-msg .av{width:140px}
+
+/* adult / parent */
+.adult{background:#f6f4f9;gap:14px}
+.adult-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.adult-h small{display:block;color:var(--muted)}
+.adult-h b{font-size:22px}
+.panel{background:#fff;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:18px}
+.panel p{margin:0;color:var(--muted);font-size:15px}
+.row-item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:12px}
+.row-item .grow{flex:1;min-width:0}
+.row-item small{display:block;color:var(--muted)}
+.row-item .mini-btn{width:44px;height:44px;border-radius:12px;background:#f3eef8;font-size:20px}
+.add{display:flex;gap:8px}
+.add select{min-height:48px;border-radius:14px;border:2px solid #eadfce;font-size:24px;background:#fff}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px}
+.tog small{display:block;color:var(--muted);font-size:14px}
+.tog input{display:none}
+.tog i{width:58px;height:34px;min-width:58px;border-radius:20px;background:#ddd;position:relative;transition:.2s}
+.tog i::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.2s}
+.tog input:checked+i{background:var(--green)}
+.tog input:checked+i::after{left:28px}
+.times{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.times input{min-height:44px;border-radius:12px;border:2px solid #eadfce;padding:0 10px}
+.act-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;font-size:15px}
+.act-list li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #f0ecf4;padding:6px 0}
+.act-list time{color:var(--muted);white-space:nowrap}
+.code-chip{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;letter-spacing:.2em;background:#fff3e0;border-radius:12px;padding:8px 14px}
+.demo{border:2px dashed #d9cdea}
+.demo .btns{display:flex;flex-wrap:wrap;gap:8px}
+.adult-actions{display:grid;gap:12px}
+
+/* toast + confetti */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 20px;border-radius:18px;
+  font-size:17px;z-index:100;max-width:90vw;text-align:center;animation:pop .25s}
+.confetti{position:absolute;top:-40px;font-size:32px;pointer-events:none;z-index:50;animation:fall 1.8s ease-in forwards}
+
+@keyframes pop{from{transform:scale(.5);opacity:0}}
+.toast{animation:none}
+@keyframes float{50%{transform:translateY(-8px)}}
+@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+@keyframes pulse{50%{transform:scale(1.05)}}
+@keyframes ring{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-8deg)}20%,40%{transform:rotate(8deg)}50%{transform:rotate(0)}}
+@keyframes halo{70%{box-shadow:0 0 0 30px rgba(76,201,127,0)}100%{box-shadow:0 0 0 0 rgba(76,201,127,0)}}
+@keyframes bounce{to{transform:scaleY(.4)}}
+@keyframes fall{to{transform:translateY(110dvh) rotate(360deg);opacity:.8}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* =========================================================================
+   Family Call — clickable prototype (single file, no backend).
+   Everything "server-side" is simulated with localStorage + timers.
+   In the real app: Django + Channels enforces the whitelist, stores media
+   privately, and relays WebRTC signaling / game state over a WebSocket.
+   ========================================================================= */
+
+const STICKERS = ['😀','😍','🥰','😂','😮','😢','👍','👏','❤️','🌟','🌈','🎉','🐱','🐶','🦄','🍦'];
+const REPLIES  = ['😍','❤️','👏','🌟','🥰','😂','🦄','🎉'];
+const EMOJIS   = ['👵','👴','👩','👨','🧔','👧','👦','👩‍🦱','🧕','👳‍♂️'];
+const COLORS   = ['#ff8fab','#6ec6ff','#b39ddb','#81c784','#ffd54f','#ffab91','#80deea'];
+const INK      = ['#3b2f4a','#ff5d5d','#ffab40','#ffd54f','#4cc97f','#4fb3f6','#a98be0'];
+const FILTERS  = [
+  {id:null,  icon:'🚫'},
+  {id:'crown',icon:'👑',fx:'👑',pos:'top'},
+  {id:'hat',  icon:'🎩',fx:'🎩',pos:'top'},
+  {id:'glass',icon:'🕶️',fx:'🕶️',pos:'mid'},
+  {id:'uni',  icon:'🦄',fx:'🦄',pos:'top'},
+  {id:'nose', icon:'🔴',fx:'🔴',pos:'low'},
+  {id:'stars',icon:'✨',fx:'✨✨✨',pos:'top'},
+];
+const DEMO_INVITE = 'KIDS42';
+
+const DEFAULT = {
+  setup:false, role:null, childName:'', pinHash:null, me:null,
+  settings:{typing:false, filters:true, quietOn:false, quietFrom:'20:00', quietTo:'07:00'},
+  contacts:[
+    {id:'g',name:'Grandma',   emoji:'👵',color:'#ff8fab'},
+    {id:'d',name:'Dad',       emoji:'👨',color:'#6ec6ff'},
+    {id:'a',name:'Aunt Sara', emoji:'👩',color:'#b39ddb'},
+    {id:'u',name:'Uncle Omar',emoji:'🧔',color:'#81c784'},
+    {id:'c',name:'Cousin Lina',emoji:'👧',color:'#ffd54f'},
+    {id:'p',name:'Grandpa',   emoji:'👴',color:'#ffab91'},
+  ],
+  unread:{g:true},
+  messages:{g:[{from:'them',type:'sticker',data:'🌟',t:Date.now()}]},
+  invites:[], activity:[],
+};
+
+/* ---------- state ---------- */
+let S = load();
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem('familycall')); if(s) return {...structuredClone(DEFAULT),...s}; }catch(e){}
+  return structuredClone(DEFAULT);
+}
+function save(){
+  try{ localStorage.setItem('familycall', JSON.stringify(S)); }
+  catch(e){ // storage full (voice notes are big) – keep only recent messages
+    for(const k in S.messages) S.messages[k] = S.messages[k].slice(-8);
+    try{ localStorage.setItem('familycall', JSON.stringify(S)); }catch(e2){}
+  }
+}
+function log(text){ S.activity.unshift({t:Date.now(),text}); S.activity = S.activity.slice(0,60); save(); }
+
+/* ---------- helpers ---------- */
+const app = document.getElementById('app');
+const $  = s => app.querySelector(s);
+const $$ = s => [...app.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+let nav = 0, cleanups = [], current = null, currentChat = null;
+function go(fn, ...args){
+  cleanups.forEach(f=>{ try{f()}catch(e){} }); cleanups = [];
+  nav++; currentChat = null; current = {fn,args};
+  window.scrollTo(0,0); fn(...args);
+}
+const onCleanup = f => cleanups.push(f);
+function later(fn, ms){ const n = nav; const t = setTimeout(()=>{ if(n===nav) fn(); }, ms); onCleanup(()=>clearTimeout(t)); return t; }
+function refreshIf(...fns){ if(current && fns.includes(current.fn)) go(current.fn, ...current.args); }
+
+function say(text){
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate=.95; u.pitch=1.2; speechSynthesis.speak(u); }catch(e){}
+}
+function toast(text){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = document.createElement('div'); t.className='toast'; t.textContent=text; document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+}
+function confetti(){
+  for(let i=0;i<24;i++){
+    const s=document.createElement('span'); s.className='confetti'; s.textContent=pick(['🎉','⭐','🌈','💖','✨','🎈']);
+    s.style.left=Math.random()*100+'%'; s.style.animationDelay=Math.random()*.5+'s'; app.appendChild(s);
+    setTimeout(()=>s.remove(),2600);
+  }
+}
+async function hashPin(pin){
+  const data = new TextEncoder().encode('familycall-demo-salt:'+pin);
+  if(crypto.subtle){ const b = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+  return 'insecure-'+pin.split('').reverse().join(''); // only when not on https/localhost
+}
+function isQuiet(){
+  const s=S.settings; if(!s.quietOn) return false;
+  const m = t => { const [h,mm]=t.split(':').map(Number); return h*60+mm; };
+  const now = new Date(), n = now.getHours()*60+now.getMinutes(), a=m(s.quietFrom), b=m(s.quietTo);
+  return a<=b ? (n>=a && n<b) : (n>=a || n<b);
+}
+function childContact(){ return {id:'child', name:S.childName||'Mia', emoji:'🧒', color:'#ffab40'}; }
+function getContact(id){ return id==='child' ? childContact() : S.contacts.find(c=>c.id===id); }
+function myFace(){ return S.role==='family' && S.me ? {emoji:S.me.emoji,color:'#a98be0'} : {emoji:'🧒',color:'#ffab40'}; }
+function homeScreen(){ return S.role==='family' ? familyView : home; }
+function useStream(stream){ onCleanup(()=>stream.getTracks().forEach(t=>t.stop())); return stream; }
+
+/* No context menus / pinch zoom in the child UI */
+document.addEventListener('contextmenu', e=>e.preventDefault());
+document.addEventListener('gesturestart', e=>e.preventDefault());
+
+/* ---------- PIN pad ---------- */
+function pinPad(el, onDone){
+  let v='';
+  el.innerHTML = `<div class="dots">${'<i></i>'.repeat(4)}</div>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button class="key" data-k="${k}">${k}</button>`).join('')}</div>`;
+  const dots = [...el.querySelectorAll('.dots i')];
+  const paint = () => dots.forEach((d,i)=>d.classList.toggle('on', i<v.length));
+  const reset = () => { v=''; paint(); const d=el.querySelector('.dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); };
+  el.querySelectorAll('.key').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(k==='⌫') v=v.slice(0,-1); else if(v.length<4) v+=k;
+    paint();
+    if(v.length===4){ const val=v; setTimeout(()=>onDone(val, reset), 120); }
+  });
+}
+
+/* =========================================================================
+   1. LOGIN / ONBOARDING
+   ========================================================================= */
+function welcome(){
+  app.innerHTML = `<section class="screen login">
+    <div class="logo">🏠💬</div>
+    <h1>Family Call</h1>
+    <p class="sub">A safe place to talk and play — only with family.</p>
+    <button class="card-btn" id="parent"><span class="big">👩‍👧</span>
+      <span><b>Set up for my child</b><small>I'm the parent. I choose who she can talk to.</small></span></button>
+    <button class="card-btn" id="family"><span class="big">💌</span>
+      <span><b>Join my family</b><small>I got an invite code from the parent.</small></span></button>
+    <p class="fine">No ads · No strangers · Invite only</p>
+  </section>`;
+  $('#parent').onclick = ()=>go(setupParent,1,{});
+  $('#family').onclick = ()=>go(join);
+}
+
+function setupParent(step, data){
+  const back = `<div class="topbar"><button class="round" id="back">⬅️</button><span class="step">Step ${Math.min(step,3)} of 3</span></div>`;
+  if(step===1){
+    app.innerHTML = `<section class="screen login">${back}
+      <h2>What's your child's name?</h2>
+      <p class="sub" style="text-align:left">It shows on her home screen. Family will see it too.</p>
+      <input id="cn" class="field" maxlength="20" placeholder="e.g. Mia" value="${esc(data.name||'')}">
+      <button class="btn primary" id="next">Next →</button></section>`;
+    $('#back').onclick = ()=>go(welcome);
+    $('#cn').focus();
+    $('#next').onclick = ()=>{ const n=$('#cn').value.trim(); if(!n) return toast('Please type a name'); go(setupParent,2,{name:n}); };
+  }
+  else if(step===2 || step===3){
+    app.innerHTML = `<section class="screen login center">${back}
+      <div class="lock">${step===2?'🔐':'🔁'}</div>
+      <h2>${step===2?'Choose a parent PIN':'Type it again'}</h2>
+      <p class="sub">${step===2?'4 numbers. Only you know it — it unlocks the parent area.':'Just to be sure.'}</p>
+      <div id="pp"></div></section>`;
+    $('#back').onclick = ()=>go(setupParent,step-1,data);
+    pinPad($('#pp'), async (pin, reset)=>{
+      if(step===2) return go(setupParent,3,{...data,pin});
+      if(pin!==data.pin){ reset(); return toast("PINs don't match — try again"); }
+      S.pinHash = await hashPin(pin); S.childName=data.name; S.role='child'; S.setup=true;
+      log('Device set up'); go(setupParent,4,data);
+    });
+  }
+  else {
+    app.innerHTML = `<section class="screen login">
+      <h2>Almost done! 🎉</h2>
+      <p class="sub" style="text-align:left">A website can't lock a phone by itself. These steps make it safe:</p>
+      <div class="checklist">
+        <div><span>📲</span><p style="margin:0"><b>Add to Home Screen</b><small>Browser menu → "Install app". It opens with no address bar.</small></p></div>
+        <div><span>📌</span><p style="margin:0"><b>Turn on Screen Pinning</b><small>Android: Settings → Security → App pinning. iPad: Guided Access.</small></p></div>
+        <div><span>🚫</span><p style="margin:0"><b>Remove WhatsApp & Messenger</b><small>From this device. Strongest protection of all.</small></p></div>
+        <div><span>🤫</span><p style="margin:0"><b>Your secret door</b><small>Hold the <b>top-left corner</b> for 3 seconds, then type your PIN.</small></p></div>
+      </div>
+      <button class="btn primary" id="start">Start ${esc(S.childName)}'s app</button></section>`;
+    $('#start').onclick = ()=>go(home);
+  }
+}
+
+function join(){
+  let emoji = EMOJIS[0];
+  app.innerHTML = `<section class="screen login">
+    <div class="topbar"><button class="round" id="back">⬅️</button></div>
+    <h2>Join the family 💌</h2>
+    <p class="sub" style="text-align:left">Type the code the parent sent you.</p>
+    <input id="code" class="field code" maxlength="6" placeholder="••••••" autocapitalize="characters" autocomplete="off">
+    <p class="fine">Prototype demo code: <b>${DEMO_INVITE}</b></p>
+    <input id="nm" class="field" maxlength="20" placeholder="Your name (e.g. Grandma)">
+    <div class="emoji-pick">${EMOJIS.map((e,i)=>`<button data-e="${e}" class="${i?'':'on'}">${e}</button>`).join('')}</div>
+    <button class="btn primary" id="go">Join</button></section>`;
+  $('#back').onclick = ()=>go(welcome);
+  $$('.emoji-pick button').forEach(b=>b.onclick=()=>{ $$('.emoji-pick button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); emoji=b.dataset.e; });
+  $('#go').onclick = ()=>{
+    const code = $('#code').value.trim().toUpperCase(), name = $('#nm').value.trim();
+    const inv = S.invites.find(i=>i.code===code && !i.used);
+    if(code!==DEMO_INVITE && !inv) return toast('That code is not valid or was already used');
+    if(!name) return toast('Please type your name');
+    if(inv){ inv.used = true; inv.by = name; }
+    S.me = {name, emoji}; S.role='family'; S.setup=true; save();
+    go(familyView);
+  };
+}
+
+/* =========================================================================
+   2. FAMILY MEMBER VIEW (normal adult UI, not locked)
+   ========================================================================= */
+function familyView(){
+  const kid = childContact();
+  app.innerHTML = `<section class="screen adult">
+    <header class="adult-h"><div><small>Signed in as</small><b>${S.me.emoji} ${esc(S.me.name)}</b></div></header>
+    <h3>Your family</h3>
+    <div class="row-item"><span class="av sm" style="background:${kid.color}">${kid.emoji}${S.unread.child?'<i class="dot"></i>':''}</span>
+      <div class="grow"><b>${esc(kid.name)}</b><small>Child account · protected</small></div></div>
+    <div class="adult-actions">
+      <button class="btn" id="m">💬 Messages</button>
+      <button class="btn" id="c">📹 Video call</button>
+      <button class="btn" id="p">🎲 Play a game</button>
+    </div>
+    <p class="fine">You can only reach people the parent approved. Nobody can find this family by searching.</p>
+    <button class="link" id="sw">Demo: switch this device to the child view</button>
+  </section>`;
+  $('#m').onclick = ()=>go(chat,'child');
+  $('#c').onclick = ()=>go(call,'child','out');
+  $('#p').onclick = ()=>go(game,'child',false);
+  $('#sw').onclick = ()=>{ S.role='child'; save(); go(home); };
+}
+
+/* =========================================================================
+   3. CHILD HOME — photo grid + hidden parent gate
+   ========================================================================= */
+function home(){
+  const q = isQuiet();
+  app.innerHTML = `<section class="screen home">
+    <div class="gate-corner" id="gc"><svg width="64" height="64" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="28" fill="none" stroke="#3b2f4a" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="176" stroke-dashoffset="176" transform="rotate(-90 32 32)"/></svg></div>
+    <header class="home-h"><span>👋</span><b>${esc(S.childName||'Hi!')}</b></header>
+    <div class="grid">${S.contacts.map(c=>`
+      <button class="tile" data-id="${c.id}" ${q?'disabled':''} aria-label="${esc(c.name)}">
+        <span class="av" style="background:${c.color}">${c.emoji}${S.unread[c.id]?'<i class="dot"></i>':''}</span>
+        <span class="nm">${esc(c.name)}</span></button>`).join('')}</div>
+    ${q?`<div class="sleep">🌙<b>Sleepy time</b><small>See you in the morning!</small></div>`:''}
+  </section>`;
+  $$('.tile').forEach(t=>t.onclick=()=>go(person,t.dataset.id));
+  setupGate($('#gc'));
+}
+
+function setupGate(el){
+  let start=0, raf=0; const ring = el.querySelector('circle');
+  const end = () => { cancelAnimationFrame(raf); start=0; el.classList.remove('show'); ring.style.strokeDashoffset='176'; };
+  const tick = () => {
+    const p = Math.min(1,(performance.now()-start)/3000);
+    if(p>.33){ el.classList.add('show'); ring.style.strokeDashoffset = String(176*(1-(p-.33)/.67)); }
+    if(p>=1){ end(); go(gate); } else raf = requestAnimationFrame(tick);
+  };
+  el.onpointerdown = e => { e.preventDefault(); el.setPointerCapture(e.pointerId); start=performance.now(); raf=requestAnimationFrame(tick); };
+  el.onpointerup = el.onpointercancel = end;
+  onCleanup(end);
+}
+
+function gate(){
+  if(!S.pinHash){ toast('No PIN set yet — opening parent area'); return go(parent); }
+  app.innerHTML = `<section class="screen login center">
+    <div class="lock">🔒</div><h2>Parent PIN</h2><div id="pp"></div>
+    <button class="btn ghost" id="x">Cancel</button></section>`;
+  $('#x').onclick = ()=>go(home);
+  pinPad($('#pp'), async (v, reset)=>{
+    if(await hashPin(v)===S.pinHash){ log('Parent area opened'); go(parent); } else reset();
+  });
+}
+
+/* =========================================================================
+   4. PERSON SCREEN — Call / Message / Play
+   ========================================================================= */
+function person(id){
+  const c = getContact(id); if(!c) return go(home);
+  app.innerHTML = `<section class="screen person">
+    <button class="round back" id="back" aria-label="Home">🏠</button>
+    <div class="hero"><span class="av xl pulse" style="background:${c.color}">${c.emoji}</span><h2>${esc(c.name)}</h2></div>
+    <div class="actions">
+      <button class="act green" id="call" aria-label="Call"><span>📹</span><small>Call</small></button>
+      <button class="act blue"  id="msg"  aria-label="Message"><span>💬</span><small>Talk</small>${S.unread[id]?'<i class="dot"></i>':''}</button>
+      <button class="act orange" id="play" aria-label="Play"><span>🎲</span><small>Play</small></button>
+    </div></section>`;
+  say(c.name);
+  $('#back').onclick = ()=>go(home);
+  $('#call').onclick = ()=>go(call,id,'out');
+  $('#msg').onclick  = ()=>go(chat,id);
+  $('#play').onclick = ()=>go(game,id,false);
+}
+
+/* =========================================================================
+   5. CONVERSATION — voice notes, stickers, drawings, photos, (text)
+   ========================================================================= */
+let currentAudio = null;
+
+function chat(id){
+  const c = getContact(id); if(!c) return go(homeScreen());
+  delete S.unread[id]; save();
+  const typing = S.settings.typing || S.role==='family';
+  app.innerHTML = `<section class="screen chat">
+    <header class="chat-h"><button class="round" id="back">⬅️</button>
+      <span class="av sm" style="background:${c.color}">${c.emoji}</span><b>${esc(c.name)}</b></header>
+    <div class="msgs" id="msgs"></div>
+    ${typing?`<div class="textrow"><input id="txt" class="field sm" maxlength="200" placeholder="Type a message"><button class="btn small primary" id="sendt">Send</button></div>`:''}
+    <footer class="composer">
+      <button class="round tool" id="st" aria-label="Stickers">😊</button>
+      <button class="round tool" id="dr" aria-label="Draw">🖍️</button>
+      <button class="round tool" id="ph" aria-label="Photo">📷</button>
+      <button class="mic" id="mic" aria-label="Hold to talk">🎤</button>
+    </footer>
+    <div class="tray hidden" id="tray">${STICKERS.map(s=>`<button data-s="${s}">${s}</button>`).join('')}</div>
+    <div class="rec hidden" id="rec"><span>🔴</span><div class="bars">${'<i></i>'.repeat(18)}</div><b id="rt">0</b></div>
+  </section>`;
+  currentChat = id;
+  onCleanup(()=>{ currentAudio?.pause(); currentAudio=null; });
+  renderMsgs(id);
+
+  $('#back').onclick = ()=>go(S.role==='family'?familyView:person, id);
+  $('#st').onclick = ()=>$('#tray').classList.toggle('hidden');
+  $$('#tray button').forEach(b=>b.onclick=()=>{ $('#tray').classList.add('hidden'); send(id,{type:'sticker',data:b.dataset.s}); });
+  $('#dr').onclick = ()=>drawModal(id);
+  $('#ph').onclick = ()=>cameraModal(id);
+  if(typing){
+    const sendText = ()=>{
+      let t = $('#txt').value.trim(); if(!t) return;
+      // no links, ever: strip anything URL-shaped (the server must do this too)
+      t = t.replace(/\b(?:https?:\/\/|www\.)\S+/gi,'🚫').replace(/\b\S+\.(?:com|net|org|io|me|ly|app|co)\b\S*/gi,'🚫');
+      $('#txt').value=''; send(id,{type:'text',data:t});
+    };
+    $('#sendt').onclick = sendText;
+    $('#txt').onkeydown = e=>{ if(e.key==='Enter') sendText(); };
+  }
+  setupMic(id);
+}
+
+function renderMsgs(id){
+  const box = $('#msgs'); if(!box) return;
+  const c = getContact(id), me = myFace();
+  const list = S.messages[id] || [];
+  box.innerHTML = list.length ? list.map((m,i)=>{
+    const who = m.from==='me' ? me : c;
+    let body;
+    if(m.type==='sticker') body = `<div class="bubble sticker">${esc(m.data)}</div>`;
+    else if(m.type==='voice') body = `<div class="bubble"><button class="voice" data-i="${i}"><span class="pp">▶</span>
+        <span class="wave">${Array.from({length:12},(_,k)=>`<i style="height:${10+((k*37+i*13)%28)}px;animation-delay:${k*.05}s"></i>`).join('')}</span>
+        <small>${m.dur||1}s</small></button></div>`;
+    else if(m.type==='drawing'||m.type==='photo') body = `<div class="bubble"><img class="pic" src="${m.data}" alt=""></div>`;
+    else body = `<div class="bubble text">${esc(m.data)}</div>`;
+    return `<div class="msg ${m.from==='me'?'me':''}"><span class="av sm" style="background:${who.color}">${who.emoji}</span>${body}</div>`;
+  }).join('') : `<p class="fine" style="margin:auto">Hold the 🎤 and say hello!</p>`;
+  box.scrollTop = box.scrollHeight;
+  box.querySelectorAll('.voice').forEach(btn=>btn.onclick=()=>{
+    const m = list[+btn.dataset.i];
+    if(btn.classList.contains('playing')){ currentAudio?.pause(); return; }
+    currentAudio?.pause();
+    box.querySelectorAll('.voice.playing').forEach(b=>{ b.classList.remove('playing'); b.querySelector('.pp').textContent='▶'; });
+    const a = new Audio(m.data); currentAudio = a;
+    const stop = ()=>{ btn.classList.remove('playing'); btn.querySelector('.pp').textContent='▶'; };
+    a.onpause = a.onended = stop;
+    a.play().then(()=>{ btn.classList.add('playing'); btn.querySelector('.pp').textContent='⏸'; }).catch(()=>toast('Could not play this voice note'));
+  });
+}
+
+function send(id, msg){
+  const c = getContact(id);
+  (S.messages[id] = S.messages[id]||[]).push({from:'me', t:Date.now(), ...msg});
+  S.messages[id] = S.messages[id].slice(-40);
+  log(`${S.role==='family'?S.me.name:S.childName} sent a ${msg.type} to ${c.name}`);
+  if(currentChat===id) renderMsgs(id);
+  simulateReply(id);
+}
+
+/* fake "the other person answers" so the prototype feels alive */
+const replyTimers = {};
+function simulateReply(id){
+  clearTimeout(replyTimers[id]);
+  replyTimers[id] = setTimeout(()=>{
+    (S.messages[id] = S.messages[id]||[]).push({from:'them', type:'sticker', data:pick(REPLIES), t:Date.now()});
+    if(currentChat===id) renderMsgs(id); else { S.unread[id]=true; refreshIf(home, familyView); }
+    save(); chime();
+  }, 2500);
+}
+function chime(){
+  try{ const ac=new AudioContext(), o=ac.createOscillator(), g=ac.createGain();
+    o.frequency.setValueAtTime(880,ac.currentTime); o.frequency.setValueAtTime(1175,ac.currentTime+.12);
+    g.gain.setValueAtTime(.12,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.35);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.36); setTimeout(()=>ac.close(),500);
+  }catch(e){}
+}
+
+/* ---------- hold-to-record voice notes ---------- */
+async function startRecording(){
+  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder){ toast('🎤 Voice notes need HTTPS or localhost'); return null; }
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+  catch(e){ toast('🎤 Please allow the microphone'); return null; }
+  const mime = ['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(stream, mime?{mimeType:mime}:undefined), chunks=[];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.start();
+  const ac = new AudioContext(), an = ac.createAnalyser(); an.fftSize = 64;
+  ac.createMediaStreamSource(stream).connect(an);
+  const t0 = performance.now(); let done = null;
+  const stop = () => done ||= new Promise(res=>{
+    const dur = (performance.now()-t0)/1000;
+    rec.onstop = () => {
+      stream.getTracks().forEach(t=>t.stop()); ac.close();
+      const fr = new FileReader(); fr.onload = ()=>res({url:fr.result, dur});
+      fr.readAsDataURL(new Blob(chunks,{type:rec.mimeType||'audio/webm'}));
+    };
+    rec.state!=='inactive' ? rec.stop() : rec.onstop();
+  });
+  return {stop, an, t0};
+}
+
+function setupMic(id){
+  const mic = $('#mic'), recBox = $('#rec'), bars = [...recBox.querySelectorAll('.bars i')], rt = $('#rt');
+  let holding=false, r=null, raf=0;
+  const meter = () => {
+    const d = new Uint8Array(r.an.frequencyBinCount); r.an.getByteFrequencyData(d);
+    bars.forEach((b,i)=>b.style.transform=`scaleY(${.12+Math.min(1,d[i+1]/200)})`);
+    rt.textContent = Math.floor((performance.now()-r.t0)/1000)+'s';
+    raf = requestAnimationFrame(meter);
+  };
+  const finish = async (discard=false) => {
+    holding=false; mic.classList.remove('hot'); recBox.classList.add('hidden'); cancelAnimationFrame(raf);
+    if(!r) return; const cur=r; r=null;
+    const res = await cur.stop();
+    if(discard) return;
+    if(res.dur < .7) return toast('Hold the 🎤 while you talk');
+    send(id,{type:'voice', data:res.url, dur:Math.max(1,Math.round(res.dur))});
+  };
+  mic.onpointerdown = async e => {
+    e.preventDefault(); mic.setPointerCapture(e.pointerId);
+    holding=true; mic.classList.add('hot'); $('#tray').classList.add('hidden');
+    const got = await startRecording();
+    if(!got){ holding=false; mic.classList.remove('hot'); return; }
+    r = got;
+    if(!holding) return finish();            // released before mic was ready
+    recBox.classList.remove('hidden'); meter();
+    later(()=>{ if(r===got) finish(); }, 60000); // 60 s cap
+  };
+  mic.onpointerup = mic.onpointercancel = () => { if(r) finish(); else { holding=false; mic.classList.remove('hot'); } };
+  onCleanup(()=>finish(true));
+}
+
+/* ---------- drawing pad (shared by messages + game) ---------- */
+function drawPad(canvas, getColor){
+  const ctx = canvas.getContext('2d'), rect = canvas.getBoundingClientRect(), dpr = devicePixelRatio||1;
+  canvas.width = rect.width*dpr; canvas.height = rect.height*dpr; ctx.scale(dpr,dpr);
+  const clear = () => { ctx.fillStyle='#fff'; ctx.fillRect(0,0,rect.width,rect.height); };
+  clear(); ctx.lineCap='round'; ctx.lineJoin='round';
+  const line = (a,b,color,w=10) => { ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); };
+  const pt = e => { const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; };
+  let last=null;
+  canvas.onpointerdown = e => { canvas.setPointerCapture(e.pointerId); last=pt(e); line(last,{x:last.x+.1,y:last.y},getColor()); };
+  canvas.onpointermove = e => { if(!last) return; const p=pt(e); line(last,p,getColor()); last=p; };
+  canvas.onpointerup = canvas.onpointercancel = () => last=null;
+  return {line, clear, w:rect.width, h:rect.height};
+}
+function palette(onPick){
+  return INK.map((c,i)=>`<button class="swatch ${i?'':'on'}" data-c="${c}" style="background:${c}"></button>`).join('');
+}
+function bindPalette(root, set){
+  root.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{ root.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on')); s.classList.add('on'); set(s.dataset.c); });
+}
+function modal(html){
+  const m = document.createElement('div'); m.className='modal'; m.innerHTML=html; app.querySelector('.screen').appendChild(m);
+  onCleanup(()=>m.remove()); return m;
+}
+function drawModal(id){
+  let color = INK[0];
+  const m = modal(`<div class="sheet"><canvas></canvas></div>
+    <div class="bar">${palette()}</div>
+    <div class="bar"><button class="round" data-a="x">❌</button><button class="round" data-a="clr">🗑️</button><button class="round" data-a="send" style="background:var(--green)">✅</button></div>`);
+  const cv = m.querySelector('canvas'), pad = drawPad(cv, ()=>color);
+  bindPalette(m, c=>color=c);
+  m.querySelector('[data-a=x]').onclick = ()=>m.remove();
+  m.querySelector('[data-a=clr]').onclick = ()=>pad.clear();
+  m.querySelector('[data-a=send]').onclick = ()=>{ send(id,{type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); m.remove(); };
+}
+async function cameraModal(id){
+  // Camera only (getUserMedia) — there is deliberately NO <input type="file"> anywhere.
+  const m = modal(`<div class="sheet"><video autoplay playsinline muted style="transform:scaleX(-1)"></video><img class="snap hidden" alt=""></div>
+    <div class="bar"><button class="round" data-a="x">❌</button><button class="round" data-a="snap" style="width:84px;height:84px;font-size:40px">📸</button>
+    <button class="round hidden" data-a="again">🔄</button><button class="round hidden" data-a="send" style="background:var(--green)">✅</button></div>`);
+  const v = m.querySelector('video'), img = m.querySelector('img'), btn = a => m.querySelector(`[data-a=${a}]`);
+  let stream;
+  const stopCam = () => stream?.getTracks().forEach(t=>t.stop());
+  onCleanup(stopCam);
+  btn('x').onclick = ()=>{ stopCam(); m.remove(); };
+  try{ stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); v.srcObject = stream; }
+  catch(e){ toast('📷 Camera not available (needs HTTPS or localhost)'); m.remove(); return; }
+  btn('snap').onclick = ()=>{
+    const c = document.createElement('canvas'), w=480, h=Math.round(480*(v.videoHeight||640)/(v.videoWidth||480));
+    c.width=w; c.height=h; const x=c.getContext('2d'); x.translate(w,0); x.scale(-1,1); x.drawImage(v,0,0,w,h);
+    img.src = c.toDataURL('image/jpeg',.75);
+    img.classList.remove('hidden'); v.classList.add('hidden');
+    btn('snap').classList.add('hidden'); btn('again').classList.remove('hidden'); btn('send').classList.remove('hidden');
+  };
+  btn('again').onclick = ()=>{ img.classList.add('hidden'); v.classList.remove('hidden'); btn('snap').classList.remove('hidden'); btn('again').classList.add('hidden'); btn('send').classList.add('hidden'); };
+  btn('send').onclick = ()=>{ send(id,{type:'photo', data:img.src}); stopCam(); m.remove(); };
+}
+
+/* =========================================================================
+   6. CALLS — outgoing / incoming / in-call with filters
+   (prototype: your camera is real, the other person is simulated)
+   ========================================================================= */
+async function startCam(video, facing){
+  try{
+    const s = useStream(await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false}));
+    video.srcObject = s; return s;
+  }catch(e){ return null; }
+}
+
+function call(id, dir){
+  const c = getContact(id); if(!c) return go(homeScreen());
+  if(isQuiet() && S.role!=='family'){ toast('🌙 Quiet hours'); return go(home); }
+  let facing='user', stream=null, muted=false, camOff=false, secs=0;
+  app.innerHTML = `<section class="screen call">
+    <div class="remote"><span class="av xl ${dir==='out'?'pulse':''}" style="background:${c.color}">${c.emoji}</span>
+      <b>${esc(c.name)}</b><small id="cs">${dir==='out'?'Calling…':'Connected'}</small></div>
+    <div class="self"><video id="v" class="mirror" autoplay playsinline muted></video><span class="fx" id="fx"></span></div>
+    <div class="filters hidden" id="filters">${FILTERS.map(f=>`<button data-f="${f.id}" class="${f.id?'':'on'}">${f.icon}</button>`).join('')}</div>
+    <div class="call-ctl">
+      <button class="round" id="mute" aria-label="Mute">🎙️</button>
+      <button class="round" id="cam" aria-label="Camera">📷</button>
+      <button class="round" id="flip" aria-label="Flip camera">🔄</button>
+      ${S.settings.filters?'<button class="round" id="fbtn" aria-label="Filters">🦄</button>':''}
+      <button class="round play" id="lp">🎲 Let's play!</button>
+      <button class="round end" id="end" aria-label="End call"><span>📞</span></button>
+    </div></section>`;
+  const v = $('#v');
+  const cam = async () => { stream?.getTracks().forEach(t=>t.stop()); stream = await startCam(v, facing);
+    if(!stream && !$('.nocam')) $('.self').insertAdjacentHTML('beforeend','<div class="nocam">🙈</div>'); };
+  cam();
+  log(`Call ${dir==='out'?'to':'from'} ${c.name}`);
+  const connected = () => { $('#cs').textContent='00:00'; $('.remote .av').classList.remove('pulse');
+    const iv=setInterval(()=>{ secs++; const el=$('#cs'); if(el) el.textContent=`${String(secs/60|0).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`; },1000);
+    onCleanup(()=>clearInterval(iv)); };
+  dir==='out' ? later(connected, 2200) : connected();
+
+  $('#end').onclick = ()=>go(id==='child'?familyView:person, id);
+  $('#mute').onclick = e=>{ muted=!muted; e.currentTarget.classList.toggle('off',muted); e.currentTarget.textContent = muted?'🔇':'🎙️'; };
+  $('#cam').onclick  = e=>{ camOff=!camOff; e.currentTarget.classList.toggle('off',camOff); stream?.getVideoTracks().forEach(t=>t.enabled=!camOff); };
+  $('#flip').onclick = ()=>{ facing = facing==='user'?'environment':'user'; v.classList.toggle('mirror', facing==='user'); cam(); };
+  $('#lp').onclick   = ()=>go(game, id, true);
+  $('#fbtn') && ($('#fbtn').onclick = ()=>$('#filters').classList.toggle('hidden'));
+  $$('#filters button').forEach(b=>b.onclick=()=>{
+    $$('#filters button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const f = FILTERS.find(x=>String(x.id)===b.dataset.f), fx=$('#fx');
+    fx.textContent = f?.fx||''; fx.className = 'fx '+(f?.pos||'');
+    // Real app: MediaPipe Face Landmarker positions this on the face, draws to a canvas,
+    // and canvas.captureStream() replaces the outgoing WebRTC video track.
+  });
+}
+
+function incoming(id){
+  const c = getContact(id);
+  app.innerHTML = `<section class="screen incoming" style="--c:${c.color}">
+    <div></div>
+    <div><span class="av xl ringing" style="background:${c.color};display:grid;margin:0 auto 16px">${c.emoji}</span><h2>${esc(c.name)}</h2></div>
+    <button class="answer" id="ans" aria-label="Answer">📞</button></section>`;
+  const stopRing = ringtone(); onCleanup(stopRing);
+  later(()=>say(`${c.name} is calling!`), 300);
+  $('#ans').onclick = ()=>go(call, id, 'in');
+  later(()=>{ log(`Missed call from ${c.name}`); go(home); }, 25000);
+}
+function ringtone(){
+  let ac; try{ ac = new AudioContext(); }catch(e){ return ()=>{}; }
+  const beep = () => [0,.25].forEach((off,k)=>{
+    const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+off;
+    o.frequency.value = k?784:659; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.18,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+.22);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t+.25);
+  });
+  beep(); const iv = setInterval(beep, 1600);
+  return () => { clearInterval(iv); ac.close(); };
+}
+
+/* =========================================================================
+   7. SHARED GAMES (prototype: the partner is simulated)
+   ========================================================================= */
+function game(id, inCall){
+  const c = getContact(id); if(!c) return go(homeScreen());
+  if(isQuiet() && S.role!=='family'){ toast('🌙 Quiet hours'); return go(home); }
+  const backTo = () => inCall ? go(call,id,'in') : go(id==='child'?familyView:person, id);
+  app.innerHTML = `<section class="screen game">
+    <div class="topbar"><button class="round" id="back">⬅️</button>
+      ${inCall?`<div class="mini"><span class="av sm" style="background:${c.color}">${c.emoji}</span><video id="mv" autoplay playsinline muted></video></div>`:''}</div>
+    <div id="stage" style="display:flex;flex-direction:column;gap:14px;flex:1">
+      <h2 style="text-align:center">Play with ${esc(c.name)}!</h2>
+      <div class="game-pick">
+        <button class="gtile" data-g="ttt"><span>🐱</span>Tic-tac-toe</button>
+        <button class="gtile" data-g="match"><span>🃏</span>Match pairs</button>
+        <button class="gtile" data-g="draw"><span>🎨</span>Draw together</button>
+      </div></div></section>`;
+  if(inCall) startCam($('#mv'),'user');
+  say('Pick a game!');
+  $('#back').onclick = backTo;
+  $$('.gtile').forEach(b=>b.onclick=()=>{
+    const g = b.dataset.g, stage=$('#stage');
+    // invite → accept handshake (real app: sent over the WebSocket, partner sees accept/decline)
+    stage.insertAdjacentHTML('beforeend',`<div class="overlay-msg" id="wait"><span class="av pulse" style="background:${c.color}">${c.emoji}</span>Waiting for ${esc(c.name)}…</div>`);
+    later(()=>{
+      $('#wait').innerHTML = `<span class="av" style="background:${c.color}">${c.emoji}</span>${esc(c.name)} is here! 🎉`;
+      say(`${c.name} is here!`);
+      later(()=>{ stage.innerHTML=''; log(`Played ${g} with ${c.name}`); ({ttt, match, draw:drawTogether})[g](stage, c, id); }, 900);
+    }, 1400);
+  });
+}
+
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function ttt(el, c){
+  let b = Array(9).fill(null), turn='X', over='';
+  const ICON = {X:'🐱', O:'🐶'};
+  const win = w => LINES.some(l=>l.every(i=>b[i]===w));
+  const aiMove = () => {
+    for(const who of ['O','X']) for(const l of LINES){ const v=l.map(i=>b[i]);
+      if(v.filter(x=>x===who).length===2 && v.includes(null) && Math.random()<.7) return l[v.indexOf(null)]; }
+    const free = b.map((v,i)=>v?null:i).filter(i=>i!==null); return pick(free);
+  };
+  const move = (i, w) => {
+    b[i]=w;
+    if(win(w)){ over = w==='X'?'You win! 🎉':`${c.name} wins! 🐶`; say(w==='X'?'You win!':`${c.name} wins!`); if(w==='X') confetti(); }
+    else if(b.every(Boolean)){ over="It's a tie! 🤝"; say("It's a tie!"); }
+    else turn = w==='X'?'O':'X';
+    render();
+    if(!over && turn==='O') later(()=>move(aiMove(),'O'), 900);
+  };
+  const render = () => {
+    el.innerHTML = `<div class="turn">${over?'':turn==='X'?'Your turn! 🐱':`${esc(c.name)}'s turn… 🐶`}</div>
+      <div class="ttt">${b.map((v,i)=>`<button class="cell" data-i="${i}" ${v||over||turn!=='X'?'disabled':''}>${v?ICON[v]:''}</button>`).join('')}</div>
+      ${over?`<div class="over"><b>${esc(over)}</b><button class="btn primary" id="again">🔁 Again</button></div>`:''}`;
+    el.querySelectorAll('.cell').forEach(x=>x.onclick=()=>move(+x.dataset.i,'X'));
+    el.querySelector('#again')?.addEventListener('click',()=>{ b=Array(9).fill(null); turn='X'; over=''; render(); });
+  };
+  render(); say('Your turn!');
+}
+
+function match(el, c){
+  const deck = shuffle(['🐶','🐱','🐰','🦊','🐼','🐸'].flatMap(a=>[a,a]));
+  let open=[], done=new Set(), turn='me', busy=false, score={me:0,them:0};
+  const render = () => {
+    el.innerHTML = `<div class="score"><span>🧒 ${'⭐'.repeat(score.me)||'·'}</span><span>${c.emoji} ${'⭐'.repeat(score.them)||'·'}</span></div>
+      <div class="turn">${done.size===12?'':turn==='me'?'Your turn!':`${esc(c.name)}'s turn…`}</div>
+      <div class="cards">${deck.map((a,i)=>{ const o=open.includes(i)||done.has(i);
+        return `<button class="card ${o?'open':''} ${done.has(i)?'done':''}" data-i="${i}" ${o||busy||turn!=='me'?'disabled':''}><span>${o?a:'❓'}</span></button>`; }).join('')}</div>
+      ${done.size===12?`<div class="over"><b>All found! 🎉</b><button class="btn primary" id="again">🔁 Again</button></div>`:''}`;
+    el.querySelectorAll('.card').forEach(x=>x.onclick=()=>flip(+x.dataset.i));
+    el.querySelector('#again')?.addEventListener('click',()=>match(el,c));
+  };
+  const flip = i => {
+    open.push(i); render();
+    if(open.length<2) return;
+    busy=true; render();
+    later(()=>{
+      const [x,y]=open;
+      if(deck[x]===deck[y]){ done.add(x); done.add(y); score[turn]++; say(turn==='me'?'Yay! A match!':'Match!'); chime(); }
+      else turn = turn==='me'?'them':'me';
+      open=[]; busy=false; render();
+      if(done.size===12){ confetti(); say('All found! Great job!'); }
+      else if(turn==='them') partner();
+    }, 1000);
+  };
+  const partner = () => {
+    const free = deck.map((_,i)=>i).filter(i=>!done.has(i));
+    const [a,b] = shuffle(free);
+    later(()=>{ open=[a]; render(); later(()=>flip(b), 700); }, 700);
+  };
+  render(); say('Find the matching animals!');
+}
+
+function drawTogether(el, c, id){
+  let color = INK[0];
+  el.innerHTML = `<div class="draw-wrap"><canvas></canvas><span class="partner" id="pc" style="left:-50px;top:-50px">${c.emoji}</span></div>
+    <div class="palette">${palette()}</div>
+    <div class="palette"><button class="round" id="clr">🗑️</button><button class="btn primary" id="save">💌 Send picture</button></div>`;
+  const cv = el.querySelector('canvas'), pad = drawPad(cv, ()=>color), pc = el.querySelector('#pc');
+  bindPalette(el, x=>color=x);
+  el.querySelector('#clr').onclick = ()=>pad.clear();
+  el.querySelector('#save').onclick = ()=>{ send(id,{type:'drawing', data:cv.toDataURL('image/jpeg',.7)}); confetti(); toast(`Sent to ${c.name}! 💌`); };
+  // simulated partner strokes (real app: strokes arrive as point lists over the WebSocket)
+  const pcolor = pick(INK.slice(1));
+  const stroke = () => {
+    let x=Math.random()*pad.w, y=Math.random()*pad.h, a=Math.random()*6.28, steps=0;
+    const iv = setInterval(()=>{
+      a += (Math.random()-.5)*.8; const nx=Math.max(5,Math.min(pad.w-5,x+Math.cos(a)*9)), ny=Math.max(5,Math.min(pad.h-5,y+Math.sin(a)*9));
+      pad.line({x,y},{x:nx,y:ny},pcolor,8); x=nx; y=ny; pc.style.left=x+'px'; pc.style.top=y+'px';
+      if(++steps>45) clearInterval(iv);
+    }, 30);
+    onCleanup(()=>clearInterval(iv));
+    later(stroke, 3500+Math.random()*3000);
+  };
+  later(stroke, 1500);
+  say(`Draw with ${c.name}!`);
+}
+
+/* =========================================================================
+   8. PARENT DASHBOARD
+   ========================================================================= */
+function parent(){
+  const s = S.settings;
+  const tog = (k,title,sub) => `<label class="tog"><span><b>${title}</b><small>${sub}</small></span><input type="checkbox" data-k="${k}" ${s[k]?'checked':''}><i></i></label>`;
+  const fmt = t => new Date(t).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  app.innerHTML = `<section class="screen adult">
+    <header class="adult-h"><b>⚙️ Parent area</b><button class="btn small primary" id="done">Done</button></header>
+
+    <div class="panel"><h3>Family contacts</h3><p>Only these people can reach ${esc(S.childName||'your child')}.</p>
+      <div id="clist">${S.contacts.map((c,i)=>`<div class="row-item" style="padding:6px 0">
+        <span class="av sm" style="background:${c.color}">${c.emoji}</span><div class="grow"><b>${esc(c.name)}</b></div>
+        <button class="mini-btn" data-up="${i}" ${i?'':'disabled'}>⬆️</button><button class="mini-btn" data-dn="${i}" ${i<S.contacts.length-1?'':'disabled'}>⬇️</button>
+        <button class="mini-btn" data-rm="${i}">🗑️</button></div>`).join('')}</div>
+      <div class="add"><select id="ae">${EMOJIS.map(e=>`<option>${e}</option>`).join('')}</select>
+        <input id="an" class="field sm" maxlength="20" placeholder="Name"><button class="btn small" id="add">Add</button></div></div>
+
+    <div class="panel"><h3>Invite a family member</h3><p>Create a one-time code and send it to them. They type it on their own phone.</p>
+      <button class="btn small" id="inv">➕ Create invite code</button>
+      ${S.invites.slice(-4).reverse().map(i=>`<div class="row-item" style="padding:4px 0"><span class="code-chip">${i.code}</span>
+        <div class="grow"><small>${i.used?`Used by ${esc(i.by||'someone')}`:'Not used yet'}</small></div></div>`).join('')}</div>
+
+    <div class="panel"><h3>Settings</h3>
+      ${tog('typing','Text typing','Off until she can read and write. No links, ever.')}
+      ${tog('filters','Video filters','Fun face filters during calls')}
+      ${tog('quietOn','Quiet hours','No calls, messages or games')}
+      <div class="times"><input type="time" id="qf" value="${s.quietFrom}"> to <input type="time" id="qt" value="${s.quietTo}"></div></div>
+
+    <div class="panel"><h3>Recent activity</h3>
+      <ul class="act-list">${S.activity.length?S.activity.map(a=>`<li><span>${esc(a.text)}</span><time>${fmt(a.t)}</time></li>`).join(''):'<li>Nothing yet</li>'}</ul></div>
+
+    <div class="panel"><h3>Security</h3><button class="btn small" id="cpin">🔑 Change PIN</button></div>
+
+    <div class="panel demo"><h3>🧪 Prototype tools</h3><p>Pretend a family member does something.</p>
+      <select id="who" class="field sm">${S.contacts.map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('')}</select>
+      <div class="btns"><button class="btn small" id="simcall">📞 Incoming call</button><button class="btn small" id="simmsg">💬 New message</button>
+      <button class="btn small danger" id="reset">Reset prototype</button></div></div>
+  </section>`;
+
+  $('#done').onclick = ()=>go(home);
+  $$('[data-k]').forEach(x=>x.onchange=()=>{ s[x.dataset.k]=x.checked; save(); });
+  $('#qf').onchange = e=>{ s.quietFrom=e.target.value; save(); };
+  $('#qt').onchange = e=>{ s.quietTo=e.target.value; save(); };
+  const swap = (i,j)=>{ [S.contacts[i],S.contacts[j]]=[S.contacts[j],S.contacts[i]]; save(); go(parent); };
+  $$('[data-up]').forEach(b=>b.onclick=()=>swap(+b.dataset.up, +b.dataset.up-1));
+  $$('[data-dn]').forEach(b=>b.onclick=()=>swap(+b.dataset.dn, +b.dataset.dn+1));
+  $$('[data-rm]').forEach(b=>b.onclick=()=>{ const c=S.contacts[+b.dataset.rm];
+    if(confirm(`Remove ${c.name}? They will no longer be able to reach her.`)){ S.contacts.splice(+b.dataset.rm,1); log(`Removed ${c.name}`); go(parent); } });
+  $('#add').onclick = ()=>{ const n=$('#an').value.trim(); if(!n) return toast('Type a name');
+    S.contacts.push({id:'c'+Date.now(), name:n, emoji:$('#ae').value, color:COLORS[S.contacts.length%COLORS.length]}); log(`Added ${n}`); go(parent); };
+  $('#inv').onclick = ()=>{
+    const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', code=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join('');
+    S.invites.push({code, t:Date.now(), used:false}); log(`Invite code created`); go(parent);
+  };
+  $('#cpin').onclick = ()=>go(changePin,1,null);
+  $('#simcall').onclick = ()=>{ if(isQuiet()) return toast('Blocked: quiet hours are on'); go(incoming, $('#who').value); };
+  $('#simmsg').onclick = ()=>{ const id=$('#who').value; (S.messages[id]=S.messages[id]||[]).push({from:'them',type:'sticker',data:pick(REPLIES),t:Date.now()});
+    S.unread[id]=true; save(); toast('Message sent — tap Done to see the red dot'); };
+  $('#reset').onclick = ()=>{ if(confirm('Erase everything in this prototype?')){ try{localStorage.removeItem('familycall')}catch(e){} S=structuredClone(DEFAULT); go(welcome); } };
+}
+
+function changePin(step, first){
+  app.innerHTML = `<section class="screen login center"><div class="lock">🔑</div>
+    <h2>${step===1?'New PIN':'Type it again'}</h2><div id="pp"></div><button class="btn ghost" id="x">Cancel</button></section>`;
+  $('#x').onclick = ()=>go(parent);
+  pinPad($('#pp'), async (v, reset)=>{
+    if(step===1) return go(changePin,2,v);
+    if(v!==first){ reset(); return toast("PINs don't match"); }
+    S.pinHash = await hashPin(v); log('PIN changed'); toast('PIN changed ✅'); go(parent);
+  });
+}
+
+/* ---------- boot ---------- */
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+go(!S.setup ? welcome : S.role==='family' ? familyView : home);
+</script>
+</body>
+</html>
