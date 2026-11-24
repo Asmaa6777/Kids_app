@@ -39,18 +39,21 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scroll = ScrollController();
   Timer? _reply;
 
-  FamilyStore get _store => context.read<FamilyStore>();
+  // Kept from initState: dispose() may not look things up through context.
+  late final FamilyStore _store;
 
   @override
   void initState() {
     super.initState();
+    _store = context.read<FamilyStore>();
     // Opening the chat counts as reading it. Run after the first frame,
     // because notifying listeners during build is not allowed.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _store.markRead(widget.contactId));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _store.openChat(widget.contactId));
   }
 
   @override
   void dispose() {
+    _store.closeChat(widget.contactId);
     _reply?.cancel();
     _text.dispose();
     _scroll.dispose();
@@ -63,7 +66,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ChatMessage(fromMe: true, type: type, data: data, durationSeconds: seconds, sentAt: _store.now),
     );
     _scrollToEnd();
-    if (widget.demoReplies) {
+    // Online, a real person answers, so no demo replies.
+    if (widget.demoReplies && !_store.online) {
       _reply?.cancel();
       _reply = Timer(const Duration(seconds: 2), () {
         if (!mounted) return;

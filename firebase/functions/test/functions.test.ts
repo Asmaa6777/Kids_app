@@ -72,7 +72,7 @@ before(async () => {
   await b.commit();
   await setDoc(doc(parent.db, `families/${FID}/contacts/g`), { name: 'Grandma', color: 'coral', order: 0 });
   await setDoc(doc(parent.db, `families/${FID}/contacts/u`), { name: 'Uncle Omar', color: 'blue', order: 1 });
-  await setDoc(doc(parent.db, `users/${parent.uid}`), { familyId: FID, fcmTokens: ['parent-token'] });
+  await setDoc(doc(parent.db, `users/${parent.uid}`), { familyId: FID, fids: ['parent-fid'] });
 });
 
 after(async () => {
@@ -151,7 +151,7 @@ describe('call tokens', () => {
 
 describe('push notifications', () => {
   before(async () => {
-    await setDoc(doc(grandma.db, `users/${grandma.uid}`), { fcmTokens: ['grandma-token'] }, { merge: true });
+    await setDoc(doc(grandma.db, `users/${grandma.uid}`), { fids: ['grandma-fid'] }, { merge: true });
   });
 
   test('grandma calls → the child device rings', async () => {
@@ -160,7 +160,7 @@ describe('push notifications', () => {
     });
     const push = await outboxFor(parent.uid, 'call');
     assert.deepEqual(push.data, { type: 'call', familyId: FID, contactId: 'g', callId: call.id });
-    assert.deepEqual(push.tokens, ['parent-token']);
+    assert.deepEqual(push.fids, ['parent-fid']);
   });
 
   test('the child sends a sticker → grandma gets a message push', async () => {

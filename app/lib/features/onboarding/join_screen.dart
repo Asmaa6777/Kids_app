@@ -27,8 +27,14 @@ class _JoinScreenState extends State<JoinScreen> {
     super.dispose();
   }
 
-  void _join() {
-    final error = context.read<FamilyStore>().joinFamily(code: _code.text, name: _name.text, color: _color);
+  bool _busy = false;
+
+  Future<void> _join() async {
+    setState(() => _busy = true);
+    // Online, this asks the redeemInvite Cloud Function, so it takes a moment.
+    final error = await context.read<FamilyStore>().joinFamily(code: _code.text, name: _name.text, color: _color);
+    if (!mounted) return;
+    setState(() => _busy = false);
     if (error != null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -122,8 +128,8 @@ class _JoinScreenState extends State<JoinScreen> {
             BubblyButton(
               key: const Key('join'),
               color: FamilyColor.coral,
-              onPressed: _join,
-              child: const Center(child: Text('Join', style: TextStyle(fontSize: 24))),
+              onPressed: _busy ? null : _join,
+              child: Center(child: Text(_busy ? 'Joining…' : 'Join', style: const TextStyle(fontSize: 24))),
             ),
           ],
         ),

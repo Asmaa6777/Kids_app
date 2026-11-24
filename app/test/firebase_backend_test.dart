@@ -176,7 +176,7 @@ void main() {
     await backend.registerPushToken('t1');
     await backend.registerPushToken('t1');
     await backend.registerPushToken('t2');
-    expect((await db.doc('users/parent-uid').get()).data()!['fcmTokens'], ['t1', 't2']);
+    expect((await db.doc('users/parent-uid').get()).data()!['fids'], ['t1', 't2']);
   });
 
   test('BackendException shows the server message', () {

@@ -5,19 +5,25 @@ import 'package:http/http.dart' as http;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:material_ui/material_ui.dart';
 
+import '../backend/family_backend.dart';
 import '../theme/colors.dart';
 import '../widgets/family_avatar.dart';
 
 /// Video calls, without writing any WebRTC ourselves.
 ///
-/// The call screen only knows [CallService] and [CallSession]. Two implementations:
+/// The call screen only knows [CallService] and [CallSession]. Implementations:
 ///   * [DemoCallService]: no server needed; the other person "picks up" after 2 s.
-///   * [LiveKitCallService]: real calls through LiveKit (rooms, TURN, reconnects
-///     all handled by the SDK). Turned on by passing two build-time settings:
+///   * [FirebaseCallService]: real LiveKit calls; the token comes from our
+///     `livekitToken` Cloud Function, which checks membership and quiet hours.
+///   * [LiveKitCallService]: real LiveKit calls with your own token server
+///     (rooms, TURN, reconnects all handled by the SDK), turned on by:
 ///       `flutter run --dart-define=LIVEKIT_URL=wss://PROJECT.livekit.cloud`
 ///       `            --dart-define=LIVEKIT_TOKEN_URL=https://YOUR-FUNCTION/token`
+/// Which family and thread a call belongs to (null when offline).
+typedef CallTarget = ({String familyId, String threadId});
+
 abstract interface class CallService {
-  Future<CallSession> start({required String room, required String identity});
+  Future<CallSession> start({required String contactId, required String identity, CallTarget? target});
 }
 
 abstract class CallSession extends ChangeNotifier {
@@ -36,8 +42,9 @@ abstract class CallSession extends ChangeNotifier {
   Widget buildLocal(BuildContext context);
 }
 
-/// Picks LiveKit when configured, otherwise the demo.
-CallService defaultCallService() {
+/// Firebase when there's a backend, else your own LiveKit token server if configured, else the demo.
+CallService defaultCallService({FamilyBackend? backend}) {
+  if (backend != null) return FirebaseCallService(backend);
   const url = String.fromEnvironment('LIVEKIT_URL');
   const tokenUrl = String.fromEnvironment('LIVEKIT_TOKEN_URL');
   return url.isNotEmpty && tokenUrl.isNotEmpty
@@ -56,7 +63,7 @@ class DemoCallService implements CallService {
   DemoCallSession? last; // handy for tests
 
   @override
-  Future<CallSession> start({required String room, required String identity}) async =>
+  Future<CallSession> start({required String contactId, required String identity, CallTarget? target}) async =>
       last = DemoCallSession(answerAfter);
 }
 
@@ -123,18 +130,37 @@ class LiveKitCallService implements CallService {
   final Uri tokenUrl;
 
   @override
-  Future<CallSession> start({required String room, required String identity}) async {
+  Future<CallSession> start({required String contactId, required String identity, CallTarget? target}) async {
+    final room = 'family-$contactId';
     final res = await http.get(tokenUrl.replace(queryParameters: {'room': room, 'identity': identity}));
     if (res.statusCode != 200) throw Exception('Token server said ${res.statusCode}');
-    final token = (jsonDecode(res.body) as Map)['token'] as String;
-
-    final r = lk.Room(roomOptions: const lk.RoomOptions(adaptiveStream: true, dynacast: true));
-    final session = _LiveKitSession(r);
-    await r.connect(url, token);
-    await r.localParticipant?.setCameraEnabled(true);
-    await r.localParticipant?.setMicrophoneEnabled(true);
-    return session;
+    return _joinLiveKit(url, (jsonDecode(res.body) as Map)['token'] as String);
   }
+}
+
+/// Real calls with tokens from the `livekitToken` Cloud Function.
+/// Offline (no family on the server yet) it falls back to the demo.
+class FirebaseCallService implements CallService {
+  FirebaseCallService(this.backend, {CallService? offline}) : offline = offline ?? DemoCallService();
+
+  final FamilyBackend backend;
+  final CallService offline;
+
+  @override
+  Future<CallSession> start({required String contactId, required String identity, CallTarget? target}) async {
+    if (target == null) return offline.start(contactId: contactId, identity: identity);
+    final t = await backend.callToken(target.familyId, target.threadId);
+    return _joinLiveKit(t.url, t.token);
+  }
+}
+
+Future<CallSession> _joinLiveKit(String url, String token) async {
+  final r = lk.Room(roomOptions: const lk.RoomOptions(adaptiveStream: true, dynacast: true));
+  final session = _LiveKitSession(r);
+  await r.connect(url, token);
+  await r.localParticipant?.setCameraEnabled(true);
+  await r.localParticipant?.setMicrophoneEnabled(true);
+  return session;
 }
 
 class _LiveKitSession extends CallSession {

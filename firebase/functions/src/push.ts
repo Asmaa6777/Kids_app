@@ -19,16 +19,17 @@ export interface PushPayload {
 export async function pushToUser(uid: string, data: PushPayload): Promise<number> {
   const db = getFirestore();
   const userRef = db.doc(`users/${uid}`);
-  const tokens: string[] = (await userRef.get()).get('fcmTokens') ?? [];
-  if (tokens.length === 0) return 0;
+  // FIDs (Firebase Installation IDs) are the current FCM device addresses.
+  const fids: string[] = (await userRef.get()).get('fids') ?? [];
+  if (fids.length === 0) return 0;
 
   if (process.env.FUNCTIONS_EMULATOR === 'true') {
-    await db.collection('_pushOutbox').add({ uid, tokens, data, at: FieldValue.serverTimestamp() });
-    return tokens.length;
+    await db.collection('_pushOutbox').add({ uid, fids, data, at: FieldValue.serverTimestamp() });
+    return fids.length;
   }
 
   const res = await getMessaging().sendEachForMulticast({
-    tokens,
+    fids,
     data,
     android: { priority: 'high', ttl: data.type === 'call' ? 30_000 : 24 * 3600_000 },
     apns: { headers: { 'apns-priority': '10' } },
@@ -36,9 +37,9 @@ export async function pushToUser(uid: string, data: PushPayload): Promise<number
 
   // Forget tokens of uninstalled apps so the list doesn't grow forever.
   const dead = res.responses
-    .map((r, i) => (!r.success && r.error?.code === 'messaging/registration-token-not-registered' ? tokens[i] : null))
+    .map((r, i) => (!r.success && r.error?.code === 'messaging/registration-token-not-registered' ? fids[i] : null))
     .filter((t): t is string => t !== null);
-  if (dead.length) await userRef.update({ fcmTokens: FieldValue.arrayRemove(...dead) });
+  if (dead.length) await userRef.update({ fids: FieldValue.arrayRemove(...dead) });
   if (res.failureCount) logger.warn('push failures', { uid, failures: res.failureCount });
   return res.successCount;
 }

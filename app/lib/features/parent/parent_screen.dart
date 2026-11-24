@@ -63,6 +63,21 @@ class ParentScreen extends StatelessWidget {
                       onPressed: i == s.contacts.length - 1 ? null : () => store.moveContact(c.id, 1),
                       icon: const Icon(Icons.keyboard_arrow_down_rounded),
                     ),
+                    if (s.joined.contains(c.id))
+                      const Tooltip(
+                        message: 'Joined',
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.verified_rounded, color: Color(0xFF38A97C)),
+                        ),
+                      )
+                    else
+                      IconButton(
+                        key: Key('invite-${c.id}'),
+                        tooltip: 'Invite code',
+                        onPressed: () => _showInvite(context, store, c),
+                        icon: const Icon(Icons.key_rounded),
+                      ),
                     IconButton(
                       key: Key('delete-${c.id}'),
                       tooltip: 'Remove',
@@ -80,9 +95,10 @@ class ParentScreen extends StatelessWidget {
             ],
           ),
           _Panel(
-            title: 'Invite a relative',
-            subtitle: 'Send this code to a family member. It works once and expires in 48 hours.',
+            title: 'Invite codes',
+            subtitle: 'Tap the key next to a person to get their code. It works once and expires in 48 hours.',
             children: [
+              if (s.invites.isEmpty) const Text('No codes yet', style: TextStyle(color: AppColors.muted)),
               for (final inv in s.invites.take(3))
                 Row(
                   children: [
@@ -105,18 +121,13 @@ class ParentScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        inv.used ? 'Used by ${inv.usedBy}' : (inv.isValidAt(store.now) ? 'Waiting' : 'Expired'),
+                        '${store.contact(inv.contactId ?? '')?.name ?? ''} · '
+                        '${inv.used || s.joined.contains(inv.contactId) ? 'Used' : (inv.isValidAt(store.now) ? 'Waiting' : 'Expired')}',
                         style: const TextStyle(color: AppColors.muted),
                       ),
                     ),
                   ],
                 ),
-              OutlinedButton.icon(
-                key: const Key('new-invite'),
-                onPressed: store.createInvite,
-                icon: const Icon(Icons.key_rounded),
-                label: const Text('New invite code'),
-              ),
             ],
           ),
           _Panel(
@@ -194,6 +205,21 @@ class ParentScreen extends StatelessWidget {
                 ),
             ],
           ),
+          _Panel(
+            title: 'Your data',
+            subtitle: store.online
+                ? 'Connected: messages and settings sync through your family\'s private server space.'
+                : 'Offline: everything stays on this device.',
+            children: [
+              OutlinedButton.icon(
+                key: const Key('delete-all'),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFCF3D43)),
+                onPressed: () => _confirmDeleteAll(context, store),
+                icon: const Icon(Icons.delete_forever_rounded),
+                label: const Text('Delete all family data'),
+              ),
+            ],
+          ),
           TextButton(
             onPressed: () {
               store.switchRole(Role.family);
@@ -212,6 +238,64 @@ class ParentScreen extends StatelessWidget {
       initialTime: TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60),
     );
     if (t != null) onPicked(t.hour * 60 + t.minute);
+  }
+
+  Future<void> _showInvite(BuildContext context, FamilyStore store, Contact c) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final invite = await store.createInvite(c.id);
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Code for ${c.name}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SelectableText(
+                invite.code,
+                key: const Key('invite-code'),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 6,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Send it to ${c.name}. They type it in "Join my family". It works once, for 48 hours.'),
+            ],
+          ),
+          actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done'))],
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  Future<void> _confirmDeleteAll(BuildContext context, FamilyStore store) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete everything?'),
+        content: const Text(
+          'All messages, voice notes, contacts and settings are erased from this device and the server. '
+          'Relatives lose access. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            key: const Key('confirm-delete-all'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    await store.deleteAllData();
+    if (context.mounted) context.go('/');
   }
 
   Future<void> _confirmRemove(BuildContext context, FamilyStore store, Contact c) async {

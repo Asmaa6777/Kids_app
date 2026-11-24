@@ -195,7 +195,7 @@ describe('calls', () => {
 
 describe('private user docs and invites', () => {
   test('users read/write only their own doc', async () => {
-    await assertSucceeds(setDoc(doc(as('grandma'), 'users/grandma'), { fcmTokens: ['t'] }));
+    await assertSucceeds(setDoc(doc(as('grandma'), 'users/grandma'), { fids: ['t'] }));
     await assertFails(getDoc(doc(as('mallory'), 'users/grandma')));
   });
 

@@ -40,7 +40,8 @@ GoRouter buildRouter({String initialLocation = '/'}) => GoRouter(
     ),
     GoRoute(
       path: '/call/:id',
-      builder: (_, s) => CallScreen(contactId: s.pathParameters['id']!),
+      builder: (_, s) =>
+          CallScreen(contactId: s.pathParameters['id']!, answering: s.uri.queryParameters['answer'] == '1'),
     ),
     GoRoute(
       path: '/incoming/:id',

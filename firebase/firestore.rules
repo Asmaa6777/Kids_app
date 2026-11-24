@@ -12,7 +12,7 @@ rules_version = '2';
 //   families/{fid}/threads/{cid}/messages   the chat between the child and contact cid
 //   families/{fid}/calls/{callId}           a ringing call (a Cloud Function sends the push)
 //   families/{fid}/activity/{id}            the parent's activity log
-//   users/{uid}                             familyId + push tokens, private to that user
+//   users/{uid}                             familyId + push ids (FIDs), private to that user
 //   invites/{code}                          Cloud Functions only (no app access at all)
 
 service cloud.firestore {

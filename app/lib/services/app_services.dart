@@ -1,5 +1,7 @@
+import '../backend/family_backend.dart';
 import 'call_service.dart';
 import 'kiosk.dart';
+import 'push.dart';
 import 'speaker.dart';
 import 'voice.dart';
 
@@ -14,14 +16,17 @@ class AppServices {
     required this.recorder,
     required this.player,
     required this.calls,
+    required this.push,
   });
 
-  factory AppServices.device() => AppServices(
+  /// [backend] is set when Firebase is configured: calls then use real LiveKit tokens and push is on.
+  factory AppServices.device({FamilyBackend? backend}) => AppServices(
     speaker: TtsSpeaker(),
     kiosk: AndroidKiosk(),
     recorder: DeviceVoiceRecorder(),
     player: DeviceVoicePlayer(),
-    calls: defaultCallService(),
+    calls: defaultCallService(backend: backend),
+    push: backend != null ? FirebasePushService() : NoPushService(),
   );
 
   factory AppServices.fake() => AppServices(
@@ -30,6 +35,7 @@ class AppServices {
     recorder: FakeVoiceRecorder(),
     player: FakeVoicePlayer(),
     calls: DemoCallService(),
+    push: NoPushService(),
   );
 
   final Speaker speaker;
@@ -37,4 +43,5 @@ class AppServices {
   final VoiceRecorder recorder;
   final VoicePlayer player;
   final CallService calls;
+  final PushService push;
 }

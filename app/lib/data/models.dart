@@ -106,9 +106,12 @@ class AppSettings {
 
 /// A single-use code the parent sends to a relative.
 class Invite {
-  const Invite({required this.code, required this.createdAt, this.usedBy});
+  const Invite({required this.code, required this.createdAt, this.usedBy, this.contactId});
 
   final String code;
+
+  /// The home-screen tile this code is for (the relative joins *as* that contact).
+  final String? contactId;
   final DateTime createdAt;
   final String? usedBy;
 
@@ -117,14 +120,20 @@ class Invite {
   /// Codes expire after 48 hours so an old message can't be reused.
   bool isValidAt(DateTime now) => !used && now.difference(createdAt) < const Duration(hours: 48);
 
-  Invite markUsed(String by) => Invite(code: code, createdAt: createdAt, usedBy: by);
+  Invite markUsed(String by) => Invite(code: code, createdAt: createdAt, usedBy: by, contactId: contactId);
 
-  Map<String, Object?> toJson() => {'code': code, 'at': createdAt.millisecondsSinceEpoch, 'by': usedBy};
+  Map<String, Object?> toJson() => {
+    'code': code,
+    'at': createdAt.millisecondsSinceEpoch,
+    'by': usedBy,
+    'cid': contactId,
+  };
 
   factory Invite.fromJson(Map<String, Object?> j) => Invite(
     code: j['code'] as String,
     createdAt: DateTime.fromMillisecondsSinceEpoch(j['at'] as int),
     usedBy: j['by'] as String?,
+    contactId: j['cid'] as String?,
   );
 }
 
@@ -152,6 +161,9 @@ class FamilyState {
     this.messages = const {},
     this.invites = const [],
     this.activity = const [],
+    this.familyId,
+    this.myContactId,
+    this.joined = const {},
   });
 
   final bool isSetUp;
@@ -169,6 +181,15 @@ class FamilyState {
   final Map<String, List<ChatMessage>> messages;
   final List<Invite> invites;
   final List<ActivityEntry> activity;
+
+  /// Set once this device is connected to a family on the server (null = offline demo).
+  final String? familyId;
+
+  /// For a relative: which contact tile they joined as (their chat thread id).
+  final String? myContactId;
+
+  /// Contact ids whose relative has joined with their invite code.
+  final Set<String> joined;
 
   /// The demo family the prototype starts with.
   factory FamilyState.demo() => const FamilyState(
@@ -195,6 +216,9 @@ class FamilyState {
     Map<String, List<ChatMessage>>? messages,
     List<Invite>? invites,
     List<ActivityEntry>? activity,
+    String? familyId,
+    String? myContactId,
+    Set<String>? joined,
   }) => FamilyState(
     isSetUp: isSetUp ?? this.isSetUp,
     role: role ?? this.role,
@@ -207,6 +231,9 @@ class FamilyState {
     messages: messages ?? this.messages,
     invites: invites ?? this.invites,
     activity: activity ?? this.activity,
+    familyId: familyId ?? this.familyId,
+    myContactId: myContactId ?? this.myContactId,
+    joined: joined ?? this.joined,
   );
 
   Map<String, Object?> toJson() => {
@@ -223,6 +250,9 @@ class FamilyState {
     },
     'invites': [for (final i in invites) i.toJson()],
     'activity': [for (final a in activity) a.toJson()],
+    'familyId': familyId,
+    'myContactId': myContactId,
+    'joined': joined.toList(),
   };
 
   factory FamilyState.fromJson(Map<String, Object?> j) {
@@ -243,6 +273,9 @@ class FamilyState {
       },
       invites: [for (final i in list('invites')) Invite.fromJson(i)],
       activity: [for (final a in list('activity')) ActivityEntry.fromJson(a)],
+      familyId: j['familyId'] as String?,
+      myContactId: j['myContactId'] as String?,
+      joined: {...((j['joined'] as List?) ?? const []).cast<String>()},
     );
   }
 }

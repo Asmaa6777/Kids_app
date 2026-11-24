@@ -149,13 +149,20 @@ void main() {
       expect(h.store.state.contacts[1].id, 'g');
     });
 
-    testWidgets('new invite code is shown; quiet hours toggle reveals the times', (tester) async {
+    testWidgets('the key next to a person shows their invite code; quiet hours toggle reveals the times', (
+      tester,
+    ) async {
       final h = await openParent(tester);
-      await tester.tap(find.byKey(const Key('new-invite')));
+      await tester.tap(find.byKey(const Key('invite-g')));
       await tester.pumpAndSettle();
       final code = h.store.state.invites.first.code;
-      expect(find.text(code), findsOneWidget);
-      expect(find.text('Waiting'), findsOneWidget);
+      expect(h.store.state.invites.first.contactId, 'g');
+      expect(find.text('Code for Grandma'), findsOneWidget);
+      expect(find.byKey(const Key('invite-code')), findsOneWidget);
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.text(code), findsOneWidget); // listed under "Invite codes"
+      expect(find.text('Grandma · Waiting'), findsOneWidget);
 
       await tester.scrollUntilVisible(find.byKey(const Key('toggle-quiet')), 200);
       await tester.ensureVisible(find.byKey(const Key('toggle-quiet'))); // fully on screen, not just a sliver

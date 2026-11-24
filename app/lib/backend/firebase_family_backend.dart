@@ -238,7 +238,7 @@ class FirebaseFamilyBackend implements FamilyBackend {
 
   @override
   Future<void> registerPushToken(String token) => db.doc('users/$_uid').set({
-    'fcmTokens': FieldValue.arrayUnion([token]),
+    'fids': FieldValue.arrayUnion([token]),
   }, SetOptions(merge: true));
 }
 

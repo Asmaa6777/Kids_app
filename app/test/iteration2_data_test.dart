@@ -111,21 +111,23 @@ void main() {
       expect(store.state.activity.first.text, 'Device set up');
     });
 
-    test('invite codes are single-use and expire after 48 h', () {
-      final code = store.createInvite().code;
-      expect(store.joinFamily(code: code.toLowerCase(), name: 'Grandma', color: FamilyColor.coral), isNull);
+    test('invite codes are per contact, single-use, and expire after 48 h (offline mode)', () async {
+      final invite = await store.createInvite('g');
+      expect(invite.contactId, 'g');
+      final code = invite.code;
+      expect(await store.joinFamily(code: code.toLowerCase(), name: 'Grandma', color: FamilyColor.coral), isNull);
       expect(store.state.role, Role.family);
       expect(store.state.invites.first.usedBy, 'Grandma');
-      expect(store.joinFamily(code: code, name: 'Someone', color: FamilyColor.blue), isNotNull);
+      expect(await store.joinFamily(code: code, name: 'Someone', color: FamilyColor.blue), isNotNull);
 
-      final old = store.createInvite().code;
+      final old = (await store.createInvite('u')).code;
       clock = clock.add(const Duration(hours: 49));
-      expect(store.joinFamily(code: old, name: 'Late', color: FamilyColor.blue), contains('not valid'));
+      expect(await store.joinFamily(code: old, name: 'Late', color: FamilyColor.blue), contains('not valid'));
     });
 
-    test('join needs a name; demo code always works', () {
-      expect(store.joinFamily(code: 'KIDS42', name: '  ', color: FamilyColor.coral), 'Please type your name');
-      expect(store.joinFamily(code: 'KIDS42', name: 'Omar', color: FamilyColor.blue), isNull);
+    test('join needs a name; demo code always works', () async {
+      expect(await store.joinFamily(code: 'KIDS42', name: '  ', color: FamilyColor.coral), 'Please type your name');
+      expect(await store.joinFamily(code: 'KIDS42', name: 'Omar', color: FamilyColor.blue), isNull);
     });
 
     test('add, move and remove contacts', () {

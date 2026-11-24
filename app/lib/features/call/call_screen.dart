@@ -27,9 +27,12 @@ enum FaceFilter {
 
 /// Design page 5: in a call.
 class CallScreen extends StatefulWidget {
-  const CallScreen({super.key, required this.contactId});
+  const CallScreen({super.key, required this.contactId, this.answering = false});
 
   final String contactId;
+
+  /// True when picking up an incoming call (so we don't ring them back).
+  final bool answering;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -54,8 +57,13 @@ class _CallScreenState extends State<CallScreen> {
     final store = context.read<FamilyStore>();
     final me = store.state.role == Role.family ? store.state.me?.name ?? 'relative' : store.state.childName;
     try {
-      // Same room name on both phones, so they meet in the same LiveKit room.
-      final session = await context.read<CallService>().start(room: 'family-${widget.contactId}', identity: me);
+      if (!widget.answering) store.ring(widget.contactId); // push "ringing" to the other phone
+      // Both phones ask for the same room, so they meet there.
+      final session = await context.read<CallService>().start(
+        contactId: widget.contactId,
+        identity: me,
+        target: store.callTarget(widget.contactId),
+      );
       if (!mounted) {
         await session.hangUp();
         return;
@@ -312,7 +320,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                       key: const Key('accept'),
                       color: FamilyColor.green,
                       semanticLabel: 'Answer',
-                      onPressed: () => context.pushReplacement('/call/${c.id}'),
+                      onPressed: () => context.pushReplacement('/call/${c.id}?answer=1'),
                       child: const Center(child: Icon(Icons.videocam_rounded, size: 46)),
                     ),
                   ),
