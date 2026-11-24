@@ -1,0 +1,34 @@
+name: family_call
+description: "Family Call — a safe, invite-only calling and learning app for kids."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^18.1.4
+  material_ui: ^1.1.0
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Baloo 2 (SIL Open Font License) is bundled so the child device never
+  # contacts Google Fonts at runtime (privacy rule in CLAUDE.md).
+  fonts:
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/Baloo2-600.ttf
+          weight: 600
+        - asset: assets/fonts/Baloo2-700.ttf
+          weight: 700
+        - asset: assets/fonts/Baloo2-800.ttf
+          weight: 800
