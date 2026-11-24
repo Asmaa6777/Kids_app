@@ -1,0 +1,165 @@
+rules_version = '2';
+
+// Family Call — who may read and write what.
+//
+// The server checks these rules on every request, so a modified app still
+// cannot read another family's data or message the child without an invite.
+//
+// Data layout:
+//   families/{fid}                          childName, ownerUid, settings
+//   families/{fid}/members/{uid}            role: 'owner' (parent + child device) | 'relative' (+ contactId)
+//   families/{fid}/contacts/{cid}           a tile on the child's home: name, color, order, uid (once joined)
+//   families/{fid}/threads/{cid}/messages   the chat between the child and contact cid
+//   families/{fid}/calls/{callId}           a ringing call (a Cloud Function sends the push)
+//   families/{fid}/activity/{id}            the parent's activity log
+//   users/{uid}                             familyId + push tokens, private to that user
+//   invites/{code}                          Cloud Functions only (no app access at all)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(fid) {
+      return /databases/$(database)/documents/families/$(fid)/members/$(request.auth.uid);
+    }
+
+    function isMember(fid) {
+      return signedIn() && exists(memberDoc(fid));
+    }
+
+    function isOwner(fid) {
+      return isMember(fid) && get(memberDoc(fid)).data.role == 'owner';
+    }
+
+    // The contact tile a relative is bound to (null for the owner).
+    function myContact(fid) {
+      return get(memberDoc(fid)).data.get('contactId', null);
+    }
+
+    // The owner (child device) talks to everyone; a relative only to the child, in their own thread.
+    function inThread(fid, cid) {
+      return isOwner(fid) || (isMember(fid) && myContact(fid) == cid);
+    }
+
+    // Which side of the conversation the writer is.
+    function mySide(fid) {
+      return isOwner(fid) ? 'child' : 'contact';
+    }
+
+    function validSettings(s) {
+      return s.keys().hasOnly(['typingAllowed', 'filtersAllowed', 'quietOn', 'quietFrom', 'quietTo', 'utcOffsetMinutes'])
+        && s.typingAllowed is bool && s.filtersAllowed is bool && s.quietOn is bool
+        && s.quietFrom is int && s.quietFrom >= 0 && s.quietFrom < 1440
+        && s.quietTo is int && s.quietTo >= 0 && s.quietTo < 1440
+        && s.utcOffsetMinutes is int;
+    }
+
+    function validFamily(d) {
+      return d.keys().hasOnly(['childName', 'ownerUid', 'settings', 'createdAt'])
+        && d.childName is string && d.childName.size() >= 1 && d.childName.size() <= 20
+        && validSettings(d.settings);
+    }
+
+    match /families/{fid} {
+      allow read: if isMember(fid);
+
+      // Creating a family makes you its owner. The owner's member doc must be
+      // written in the same batch (getAfter sees the batch's result).
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && validFamily(request.resource.data)
+        && getAfter(memberDoc(fid)).data.role == 'owner';
+
+      allow update: if isOwner(fid)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validFamily(request.resource.data);
+
+      allow delete: if isOwner(fid);
+
+      match /members/{uid} {
+        allow read: if isMember(fid);
+
+        // Only the owner's own doc, and only while the family is being created.
+        // Relatives are added by the redeemInvite Cloud Function.
+        allow create: if signedIn() && uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['role'])
+          && request.resource.data.role == 'owner'
+          && !exists(/databases/$(database)/documents/families/$(fid))
+          && getAfter(/databases/$(database)/documents/families/$(fid)).data.ownerUid == request.auth.uid;
+
+        allow update: if false;
+
+        // The parent can remove a relative (not themselves).
+        allow delete: if isOwner(fid) && uid != request.auth.uid;
+      }
+
+      match /contacts/{cid} {
+        allow read: if isMember(fid);
+
+        // 'uid' links a tile to a relative's account. Only redeemInvite sets it.
+        allow create: if isOwner(fid)
+          && request.resource.data.keys().hasOnly(['name', 'color', 'order'])
+          && validContact(request.resource.data);
+        allow update: if isOwner(fid)
+          && request.resource.data.keys().hasOnly(['name', 'color', 'order', 'uid'])
+          && request.resource.data.get('uid', null) == resource.data.get('uid', null)
+          && validContact(request.resource.data);
+        allow delete: if isOwner(fid);
+
+        function validContact(d) {
+          return d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+            && d.color in ['coral', 'yellow', 'green', 'blue', 'purple', 'pink']
+            && d.order is int;
+        }
+      }
+
+      match /threads/{cid}/messages/{mid} {
+        allow read: if inThread(fid, cid);
+
+        // Messages can't be edited or deleted, and the server sets the time,
+        // so nobody can fake who said what or when.
+        allow create: if inThread(fid, cid)
+          && request.resource.data.keys().hasOnly(['from', 'type', 'data', 'dur', 'sentAt'])
+          && request.resource.data.from == mySide(fid)
+          && request.resource.data.type in ['voice', 'sticker', 'drawing', 'photo', 'text']
+          && (request.resource.data.type != 'text' || typingOk(fid))
+          && (!('data' in request.resource.data) || (request.resource.data.data is string && request.resource.data.data.size() <= 100000))
+          && (!('dur' in request.resource.data) || request.resource.data.dur is int)
+          && request.resource.data.sentAt == request.time;
+        allow update, delete: if false;
+
+        // The child can only type if the parent allowed it. Relatives can always type.
+        function typingOk(fid) {
+          return !isOwner(fid)
+            || get(/databases/$(database)/documents/families/$(fid)).data.settings.typingAllowed == true;
+        }
+      }
+
+      match /calls/{callId} {
+        allow read: if inThread(fid, resource.data.contactId);
+        allow create: if inThread(fid, request.resource.data.contactId)
+          && request.resource.data.keys().hasOnly(['contactId', 'from', 'status', 'createdAt'])
+          && request.resource.data.from == mySide(fid)
+          && request.resource.data.status == 'ringing'
+          && request.resource.data.createdAt == request.time;
+        // Either side may answer, decline or end; nothing else may change.
+        allow update: if inThread(fid, resource.data.contactId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status in ['answered', 'declined', 'ended'];
+      }
+
+      match /activity/{id} {
+        allow read, create: if isOwner(fid);
+      }
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Everything else (including invites/) is denied by default.
+  }
+}
