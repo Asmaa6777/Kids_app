@@ -80,7 +80,11 @@ class _ChoiceCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          CircleAvatar(radius: 36, backgroundColor: color.main, child: Icon(icon, size: 36, color: AppColors.ink)),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: color.main,
+            child: Icon(icon, size: 36, color: AppColors.ink),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -88,8 +92,10 @@ class _ChoiceCard extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontSize: 22, height: 1.1)),
                 const SizedBox(height: 4),
-                Text(subtitle,
-                    style: const TextStyle(fontSize: 15, color: AppColors.muted, fontWeight: FontWeight.w600)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 15, color: AppColors.muted, fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),

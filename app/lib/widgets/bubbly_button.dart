@@ -30,9 +30,9 @@ class BubblyButton extends StatefulWidget {
     this.color = FamilyColor.white,
     double this.size = 72,
     this.semanticLabel,
-  })  : borderRadius = const BorderRadius.all(Radius.circular(999)),
-        padding = EdgeInsets.zero,
-        depth = 8;
+  }) : borderRadius = const BorderRadius.all(Radius.circular(999)),
+       padding = EdgeInsets.zero,
+       depth = 8;
 
   final VoidCallback? onPressed;
   final Widget child;
@@ -41,6 +41,7 @@ class BubblyButton extends StatefulWidget {
   final EdgeInsets padding;
   final double depth;
   final String? semanticLabel;
+
   /// Fixed width/height (circle buttons only).
   final double? size;
 
@@ -70,9 +71,7 @@ class _BubblyButtonState extends State<BubblyButton> {
       decoration: BoxDecoration(
         color: widget.color.main,
         borderRadius: widget.borderRadius,
-        boxShadow: [
-          BoxShadow(color: widget.color.dark, offset: Offset(0, widget.depth - press)),
-        ],
+        boxShadow: [BoxShadow(color: widget.color.dark, offset: Offset(0, widget.depth - press))],
       ),
       alignment: widget.size != null ? Alignment.center : null,
       child: IconTheme.merge(
@@ -97,7 +96,10 @@ class _BubblyButtonState extends State<BubblyButton> {
           onTapCancel: () => _setDown(false),
           onTap: widget.onPressed,
           // Leave room underneath so the shadow is never clipped.
-          child: Padding(padding: EdgeInsets.only(bottom: widget.depth), child: surface),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: widget.depth),
+            child: surface,
+          ),
         ),
       ),
     );

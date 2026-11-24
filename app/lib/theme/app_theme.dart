@@ -7,10 +7,7 @@ ThemeData buildAppTheme() {
   final base = ThemeData(
     useMaterial3: true,
     fontFamily: 'Baloo2',
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: FamilyColor.coral.main,
-      surface: AppColors.background,
-    ),
+    colorScheme: ColorScheme.fromSeed(seedColor: FamilyColor.coral.main, surface: AppColors.background),
     scaffoldBackgroundColor: AppColors.background,
   );
 

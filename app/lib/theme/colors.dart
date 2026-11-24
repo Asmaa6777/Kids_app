@@ -35,6 +35,5 @@ enum FamilyColor {
   /// Colours a parent may assign to a contact (red and white are for UI only).
   static const choosable = [coral, yellow, green, blue, purple, pink];
 
-  static FamilyColor byName(String name) =>
-      values.firstWhere((c) => c.name == name, orElse: () => coral);
+  static FamilyColor byName(String name) => values.firstWhere((c) => c.name == name, orElse: () => coral);
 }

@@ -10,15 +10,15 @@ import '../features/onboarding/welcome_screen.dart';
 /// pushing widgets by hand) means a push notification can later open
 /// "/call/g" directly, and Android's back button behaves correctly.
 GoRouter buildRouter({String initialLocation = '/'}) => GoRouter(
-      initialLocation: initialLocation,
-      routes: [
-        GoRoute(path: '/', builder: (_, _) => const WelcomeScreen()),
-        GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
-        // Filled in by later iterations:
-        GoRoute(path: '/setup', builder: (_, _) => const _ComingSoon('Parent setup')),
-        GoRoute(path: '/join', builder: (_, _) => const _ComingSoon('Join family')),
-      ],
-    );
+  initialLocation: initialLocation,
+  routes: [
+    GoRoute(path: '/', builder: (_, _) => const WelcomeScreen()),
+    GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+    // Filled in by later iterations:
+    GoRoute(path: '/setup', builder: (_, _) => const _ComingSoon('Parent setup')),
+    GoRoute(path: '/join', builder: (_, _) => const _ComingSoon('Join family')),
+  ],
+);
 
 class _ComingSoon extends StatelessWidget {
   const _ComingSoon(this.title);
@@ -26,7 +26,7 @@ class _ComingSoon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: const Center(child: Text('Coming in the next iteration')),
-      );
+    appBar: AppBar(title: Text(title)),
+    body: const Center(child: Text('Coming in the next iteration')),
+  );
 }

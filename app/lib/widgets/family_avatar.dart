@@ -5,12 +5,7 @@ import '../theme/colors.dart';
 /// A cream circle with a person silhouette and a coloured ring
 /// (prototype: `.aw` / `.ava`). Later this will show a real photo.
 class FamilyAvatar extends StatelessWidget {
-  const FamilyAvatar({
-    super.key,
-    required this.ring,
-    this.size = 64,
-    this.unread = false,
-  });
+  const FamilyAvatar({super.key, required this.ring, this.size = 64, this.unread = false});
 
   final Color ring;
   final double size;
@@ -32,7 +27,9 @@ class FamilyAvatar extends StatelessWidget {
               color: AppColors.cream,
               border: Border.all(color: ring, width: border),
             ),
-            child: ClipOval(child: CustomPaint(painter: _SilhouettePainter(), size: Size.square(size))),
+            child: ClipOval(
+              child: CustomPaint(painter: _SilhouettePainter(), size: Size.square(size)),
+            ),
           ),
           if (unread)
             Positioned(
