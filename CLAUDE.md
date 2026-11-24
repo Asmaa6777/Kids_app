@@ -27,14 +27,21 @@ app/                    ← the real Flutter app (Android first; iOS for relativ
   lib/app/              root widget (providers) + router (every URL in one table)
   lib/data/             models, FamilyRepository (local now, Firestore later), FamilyStore (ChangeNotifier)
   lib/logic/            pure Dart, unit-tested: PIN (PBKDF2), quiet hours, invite codes, games
-  lib/services/         device features behind interfaces: TTS, kiosk (Lock Task), voice notes, calls (LiveKit/demo)
+  lib/backend/          FamilyBackend interface + Firebase implementation, FirebaseConfig (dart-define / emulator)
+  lib/services/         device features behind interfaces: TTS, kiosk (Lock Task), voice notes, calls, push (FCM)
   lib/features/         onboarding, home (+ parent gate, person, relative view), chat, parent, call, games
   lib/widgets/          BubblyButton (3D button), FamilyAvatar, PinPad, StickerView, RoundBackButton
   android/.../MainActivity.kt  ← method channel "familycall/kiosk" → startLockTask()/stopLockTask()
   test/                 one test file per iteration + helpers.dart (Harness with AppServices.fake())
+firebase/               ← backend: firestore.rules, storage.rules, Cloud Functions (TypeScript), emulator tests
+  functions/src/        createInvite, redeemInvite, livekitToken, deleteFamily, onCallCreated, onMessageCreated
+  rules-tests/          security rules tests (run on the emulators)
+  emulate.sh            runs a command against the emulators (strips sandbox proxy/Java env that breaks them)
+  README.md             how to connect a real Firebase project + LiveKit, step by step
 prototype/              ← original clickable PWA prototype (no backend), deployed to GitHub Pages
 .github/workflows/
   flutter-app.yml       ← analyze + test + build debug APK (artifact "family-call-debug-apk")
+  firebase.yml          ← security rules + Cloud Functions tests on the emulators
   deploy.yml            ← publishes prototype/ to GitHub Pages on push to main
   commit-authors.yml    ← checks commit authorship (rule 1)
 ```
@@ -53,8 +60,19 @@ Built so far (5 iterations):
 5. Video calls through `CallService` (LiveKit when configured, otherwise a demo), incoming-call screen, face-filter
    overlay, games: tic-tac-toe, memory match, and the first learning game "Count with me".
 
-Still simulated: there is no backend yet, so the "other person" is a demo (sticker replies, auto-answered calls,
-tic-tac-toe AI). Next: Firebase (Auth, Firestore, Storage, FCM) and a token Cloud Function for LiveKit.
+Firebase (after iteration 5, in steps F1–F5):
+- F1 Security rules (Firestore + Storage) with emulator tests. F2 Cloud Functions with emulator tests.
+- F3 `FamilyBackend` + `FirebaseFamilyBackend`. F4 `FamilyStore` syncs with it (online mode), push via FCM FIDs,
+  invites per contact, "Delete all family data". F5 CI + `firebase/README.md`.
+
+Two modes, chosen at build time (`lib/backend/firebase_config.dart`):
+- **Offline** (no dart-defines): everything on the device; the "other person" is a demo (sticker replies,
+  auto-answered calls, tic-tac-toe AI). All earlier tests run in this mode.
+- **Online** (`--dart-define-from-file=firebase.env.json`, or `--dart-define=FIREBASE_EMULATOR=10.0.2.2`):
+  real family data in Firestore, invites/tokens/push from Cloud Functions, real LiveKit calls.
+
+Not done yet: ringing when the app is closed (needs flutter_callkit_incoming + background FCM handler), App Check,
+Google sign-in for relatives (anonymous accounts are lost on reinstall), server-side activity log.
 
 ### Prototype screen map (for reference when porting)
 
@@ -85,6 +103,11 @@ shrink instead of overflowing on narrow phones.
 - Game and business rules go in `lib/logic/` as pure Dart with unit tests.
 - Every interactive widget a test touches gets a `Key`. Widget tests use a 400×900 phone viewport (`Harness`).
 - Format with `dart format` (page width 120, set in `analysis_options.yaml`). `flutter analyze` must be clean.
+- The server is reached only through `FamilyBackend`. Store writes go through `_remote`, a queue that keeps
+  server writes in order. Firestore field names must match `firebase/firestore.rules` exactly; change both together.
+- Every rule or function change needs a test in `firebase/rules-tests` or `firebase/functions/test`.
+- The emulator suite has no FCM: under the emulator, `pushToUser` writes to `_pushOutbox` instead (tests read it).
+- Push addresses are FIDs (`register()` / `onRegistered`, admin `fids`), not the deprecated FCM registration tokens.
 
 ## Target: the real Android app
 
@@ -94,7 +117,7 @@ shrink instead of overflowing on narrow phones.
 |---|---|---|
 | App framework | **Flutter** (Dart), chosen. Native Kotlin only where Flutter can't reach (kiosk mode, Telecom) | One codebase: the child's Android tablet **and** relatives on iPhone or Android. Every SDK below has a Flutter plugin. Alternative: Kotlin + Jetpack Compose if it will only ever be Android |
 | Video and voice calls | **LiveKit** (`livekit_client`; LiveKit Cloud free tier, or self-host later) | WebRTC, TURN, rooms and reconnection handled for us. Supports custom video track processors for face filters. Alternatives: Stream Video, Agora, Daily |
-| Accounts | **Firebase Auth** (relatives: Google / email link; child device: anonymous auth bound to the family) | No password for the child to remember |
+| Accounts | **Firebase Auth**: anonymous for now (child device = family owner; relatives join via invite). Later: Google sign-in for relatives | No password for the child to remember |
 | Data and sync | **Cloud Firestore** + security rules | Real-time contacts, chat and game moves. Replaces the planned Django + Channels backend |
 | Voice notes, drawings, photos | **Firebase Storage** | Upload/download with per-family access rules |
 | Server logic | **Cloud Functions** | Invite codes (single-use, expiring), LiveKit token minting, quiet-hours checks on the server |
@@ -163,3 +186,13 @@ flutter build apk --debug
 
 - Prototype: `python3 -m http.server -d prototype 8000`, then open `http://localhost:8000`.
 - CI builds a debug APK on every push to `app/`: Actions → "Flutter app" → artifact `family-call-debug-apk`.
+
+```bash
+# Backend (needs: npm i -g firebase-tools, Java 21)
+cd firebase/rules-tests && npm ci && npm run emulate   # 28 security rules tests
+cd firebase/functions && npm ci && npm test            # unit + emulator tests of the Cloud Functions
+cd firebase && firebase emulators:start                # then: flutter run --dart-define=FIREBASE_EMULATOR=10.0.2.2
+```
+
+Connecting a real project (Blaze plan, Anonymous auth, Firestore + Storage in europe-west1, LiveKit secrets):
+follow `firebase/README.md`.
