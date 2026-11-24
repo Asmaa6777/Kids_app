@@ -23,42 +23,76 @@ There are no ads, no search and no strangers.
 ## Current state
 
 ```
-prototype/              ← clickable PWA prototype (no backend), deployed to GitHub Pages
-  index.html            ← the whole app: HTML + CSS + JS in one file (~1300 lines)
-  sw.js                 ← service worker, network-first app-shell cache
-  manifest.webmanifest  ← PWA install metadata
-  icon.svg
+app/                    ← the real Flutter app (Android first; iOS for relatives)
+  lib/app/              root widget (providers) + router (every URL in one table)
+  lib/data/             models, FamilyRepository (local now, Firestore later), FamilyStore (ChangeNotifier)
+  lib/logic/            pure Dart, unit-tested: PIN (PBKDF2), quiet hours, invite codes, games
+  lib/services/         device features behind interfaces: TTS, kiosk (Lock Task), voice notes, calls (LiveKit/demo)
+  lib/features/         onboarding, home (+ parent gate, person, relative view), chat, parent, call, games
+  lib/widgets/          BubblyButton (3D button), FamilyAvatar, PinPad, StickerView, RoundBackButton
+  android/.../MainActivity.kt  ← method channel "familycall/kiosk" → startLockTask()/stopLockTask()
+  test/                 one test file per iteration + helpers.dart (Harness with AppServices.fake())
+prototype/              ← original clickable PWA prototype (no backend), deployed to GitHub Pages
 .github/workflows/
+  flutter-app.yml       ← analyze + test + build debug APK (artifact "family-call-debug-apk")
   deploy.yml            ← publishes prototype/ to GitHub Pages on push to main
   commit-authors.yml    ← checks commit authorship (rule 1)
 ```
 
+**Decision made:** Flutter (not native Kotlin), because relatives may use iPhones.
+Flutter 3.50 note: Material is imported from `package:material_ui/material_ui.dart`.
+
+Built so far (5 iterations):
+1. Skeleton: theme from the prototype, bundled Baloo 2 font, `BubblyButton`, `FamilyAvatar`, go_router, CI APK build.
+2. Data layer: JSON models, `LocalFamilyRepository` (SharedPreferences), `FamilyStore`, PBKDF2 PIN hashing,
+   quiet hours (crosses midnight), single-use 48 h invite codes.
+3. Onboarding (name → PIN ×2 → checklist), join with code, child home, hidden 3-second parent gate, person screen,
+   relative view, spoken names (Android TTS), app pinning (Lock Task mode).
+4. Chat (stickers, push-to-talk voice notes, finger drawings stored as normalised strokes, typing if allowed,
+   demo replies) and the parent area (contacts, invites, safety switches, quiet hours, activity log, change PIN).
+5. Video calls through `CallService` (LiveKit when configured, otherwise a demo), incoming-call screen, face-filter
+   overlay, games: tic-tac-toe, memory match, and the first learning game "Count with me".
+
+Still simulated: there is no backend yet, so the "other person" is a demo (sticker replies, auto-answered calls,
+tic-tac-toe AI). Next: Firebase (Auth, Firestore, Storage, FCM) and a token Cloud Function for LiveKit.
+
+### Prototype screen map (for reference when porting)
+
 The prototype follows the design file "Family Call.pdf" (pages 1–9). It simulates the other person with timers
-and keeps all state in `localStorage` (key `familycall-v2`). Screens map to functions in `index.html`:
+and keeps all state in `localStorage` (key `familycall-v2`).
 
-| Design page | Screen | Function |
-|---|---|---|
-| — | Welcome, parent setup (name → PIN ×2 → checklist), join with invite code | `welcome`, `setupParent`, `join` |
-| 1 | Child home: grid of family tiles, hidden parent gate (hold top-left 3 s) | `home`, `setupGate`, `gate` |
-| 2 | Person: Call / Message / Play | `person` |
-| 3 | Chat: push-to-talk voice notes, stickers, drawing, camera photo, optional typing | `chat`, `setupMic`, `drawModal`, `cameraModal` |
-| 4 | Incoming call | `incoming` |
-| 5 | In call: real self-camera, face filters (bow, glasses, crown, stars) | `call` |
-| 6–9 | Games: picker, invite, draw together, puzzle, memory match, tic-tac-toe | `picker`, `invite`, `playGame`, … |
-| — | Parent area: contacts, invites, quiet hours, typing/filters toggles, activity log, change PIN | `parent`, `changePin` |
-| — | Family-member (adult) view | `familyView` |
+| Design page | Screen | Prototype function | Flutter screen |
+|---|---|---|---|
+| — | Welcome, parent setup, join | `welcome`, `setupParent`, `join` | `WelcomeScreen`, `SetupScreen`, `JoinScreen` |
+| 1 | Child home + parent gate | `home`, `setupGate`, `gate` | `HomeScreen`, `ParentGateCorner`, `GateScreen` |
+| 2 | Person: Call / Message / Play | `person` | `PersonScreen` |
+| 3 | Chat | `chat`, `setupMic`, `drawModal`, `cameraModal` | `ChatScreen`, `DrawingPad` (camera photos: not yet) |
+| 4 | Incoming call | `incoming` | `IncomingCallScreen` |
+| 5 | In call + face filters | `call` | `CallScreen` |
+| 6–9 | Games | `picker`, `invite`, `playGame`, … | `GamePickerScreen`, `TicTacToeScreen`, `MemoryScreen`, `CountingScreen` (puzzle, draw-together: not yet) |
+| — | Parent area | `parent`, `changePin` | `ParentScreen` |
+| — | Relative view | `familyView` | `FamilyView` |
 
-UI conventions to keep in the real app: big rounded 3D buttons (`.b3d`), line icons instead of emoji, one colour
-per family member, the Baloo 2 font, voice-first for a pre-reader (`speechSynthesis` reads names aloud), and
-`prefers-reduced-motion` support.
+UI conventions to keep: big rounded 3D buttons (`BubblyButton`), rounded Material icons instead of emoji, one colour
+per family member, the Baloo 2 font, voice-first for a pre-reader (TTS reads names and answers aloud), labels that
+shrink instead of overflowing on narrow phones.
+
+### Code conventions
+
+- Screens read state with `context.watch<FamilyStore>()` and call actions with `context.read<FamilyStore>()`.
+- Device features are interfaces in `lib/services/`, bundled in `AppServices` (`.device()` / `.fake()`).
+  Never call a plugin directly from a screen.
+- Game and business rules go in `lib/logic/` as pure Dart with unit tests.
+- Every interactive widget a test touches gets a `Key`. Widget tests use a 400×900 phone viewport (`Harness`).
+- Format with `dart format` (page width 120, set in `analysis_options.yaml`). `flutter analyze` must be clean.
 
 ## Target: the real Android app
 
-### Recommended stack (proposed; confirm before scaffolding)
+### Stack
 
 | Need | Use (don't build) | Why |
 |---|---|---|
-| App framework | **Flutter** (Dart). Native Kotlin is used only where Flutter can't reach (kiosk mode, Telecom) | One codebase: the child's Android tablet **and** relatives on iPhone or Android. Every SDK below has a Flutter plugin. Alternative: Kotlin + Jetpack Compose if it will only ever be Android |
+| App framework | **Flutter** (Dart), chosen. Native Kotlin only where Flutter can't reach (kiosk mode, Telecom) | One codebase: the child's Android tablet **and** relatives on iPhone or Android. Every SDK below has a Flutter plugin. Alternative: Kotlin + Jetpack Compose if it will only ever be Android |
 | Video and voice calls | **LiveKit** (`livekit_client`; LiveKit Cloud free tier, or self-host later) | WebRTC, TURN, rooms and reconnection handled for us. Supports custom video track processors for face filters. Alternatives: Stream Video, Agora, Daily |
 | Accounts | **Firebase Auth** (relatives: Google / email link; child device: anonymous auth bound to the family) | No password for the child to remember |
 | Data and sync | **Cloud Firestore** + security rules | Real-time contacts, chat and game moves. Replaces the planned Django + Channels backend |
@@ -116,6 +150,16 @@ per family member, the Baloo 2 font, voice-first for a pre-reader (`speechSynthe
 
 ## Commands
 
-- Run the prototype locally: `python3 -m http.server -d prototype 8000` and open `http://localhost:8000`.
-- The prototype deploys automatically to GitHub Pages on push to `main` (`deploy.yml`).
-- The Flutter app does not exist yet. Add its build/test commands here once it is scaffolded.
+```bash
+cd app
+flutter pub get
+flutter analyze                 # must say "No issues found!"
+flutter test                    # all tests must pass
+flutter run                     # on a phone/emulator; demo calls
+flutter run --dart-define=LIVEKIT_URL=wss://PROJECT.livekit.cloud \
+            --dart-define=LIVEKIT_TOKEN_URL=https://YOUR-FUNCTION/token   # real calls
+flutter build apk --debug
+```
+
+- Prototype: `python3 -m http.server -d prototype 8000`, then open `http://localhost:8000`.
+- CI builds a debug APK on every push to `app/`: Actions → "Flutter app" → artifact `family-call-debug-apk`.

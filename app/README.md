@@ -6,7 +6,14 @@ The real app behind `../prototype`. See `../CLAUDE.md` for the plan and rules.
 flutter pub get
 flutter analyze
 flutter test
-flutter run            # with an Android phone/emulator connected
+flutter run            # with an Android phone/emulator connected (demo calls)
+```
+
+Real video calls need a LiveKit project and a token endpoint:
+
+```bash
+flutter run --dart-define=LIVEKIT_URL=wss://PROJECT.livekit.cloud \
+            --dart-define=LIVEKIT_TOKEN_URL=https://YOUR-FUNCTION/token
 ```
 
 Every push builds a debug APK in GitHub Actions ("Flutter app" workflow →
@@ -19,7 +26,10 @@ lib/
   main.dart            entry point
   app/                 root widget + router (all URLs in one table)
   theme/               colours and text styles from the prototype
-  widgets/             shared building blocks (BubblyButton, FamilyAvatar)
+  data/                models, repository (local now, Firestore later), FamilyStore
+  logic/               pure Dart rules: PIN, quiet hours, invites, games
+  services/            device features behind interfaces (TTS, kiosk, voice, calls)
+  widgets/             shared building blocks (BubblyButton, FamilyAvatar, PinPad…)
   features/<feature>/  one folder per area: onboarding, home, chat, call, games, parent
-test/                  one test file per iteration
+test/                one test file per iteration + helpers.dart
 ```

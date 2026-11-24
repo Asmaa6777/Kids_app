@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
-import 'package:material_ui/material_ui.dart';
 
+import '../features/call/call_screen.dart';
 import '../features/chat/chat_screen.dart';
+import '../features/games/counting_screen.dart';
+import '../features/games/game_picker_screen.dart';
+import '../features/games/memory_screen.dart';
+import '../features/games/tic_tac_toe_screen.dart';
 import '../features/home/family_view.dart';
 import '../features/home/gate_screen.dart';
 import '../features/home/home_screen.dart';
@@ -34,19 +38,31 @@ GoRouter buildRouter({String initialLocation = '/'}) => GoRouter(
       path: '/chat/:id',
       builder: (_, s) => ChatScreen(contactId: s.pathParameters['id']!),
     ),
-    // Filled in by the next iteration:
-    GoRoute(path: '/call/:id', builder: (_, _) => const _ComingSoon('Video call')),
-    GoRoute(path: '/games/:id', builder: (_, _) => const _ComingSoon('Games')),
+    GoRoute(
+      path: '/call/:id',
+      builder: (_, s) => CallScreen(contactId: s.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/incoming/:id',
+      builder: (_, s) => IncomingCallScreen(contactId: s.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/games/:id',
+      builder: (_, s) => GamePickerScreen(contactId: s.pathParameters['id']!),
+      routes: [
+        GoRoute(
+          path: 'ttt',
+          builder: (_, s) => TicTacToeScreen(contactId: s.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: 'memory',
+          builder: (_, s) => MemoryScreen(contactId: s.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: 'count',
+          builder: (_, s) => CountingScreen(contactId: s.pathParameters['id']!),
+        ),
+      ],
+    ),
   ],
 );
-
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: const Center(child: Text('Coming in the next iteration')),
-  );
-}

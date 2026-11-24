@@ -47,6 +47,7 @@ class _FamilyCallAppState extends State<FamilyCallApp> {
         Provider.value(value: widget.services.kiosk),
         Provider.value(value: widget.services.recorder),
         Provider.value(value: widget.services.player),
+        Provider.value(value: widget.services.calls),
       ],
       child: MaterialApp.router(
         title: 'Family Call',
