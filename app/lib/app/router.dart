@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../features/chat/chat_screen.dart';
 import '../features/home/family_view.dart';
 import '../features/home/gate_screen.dart';
 import '../features/home/home_screen.dart';
@@ -8,6 +9,7 @@ import '../features/home/person_screen.dart';
 import '../features/onboarding/join_screen.dart';
 import '../features/onboarding/setup_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
+import '../features/parent/parent_screen.dart';
 
 /// All screens and their URLs in one table.
 ///
@@ -27,9 +29,12 @@ GoRouter buildRouter({String initialLocation = '/'}) => GoRouter(
       path: '/person/:id',
       builder: (_, s) => PersonScreen(contactId: s.pathParameters['id']!),
     ),
-    // Filled in by later iterations:
-    GoRoute(path: '/parent', builder: (_, _) => const _ComingSoon('Parent area')),
-    GoRoute(path: '/chat/:id', builder: (_, _) => const _ComingSoon('Messages')),
+    GoRoute(path: '/parent', builder: (_, _) => const ParentScreen()),
+    GoRoute(
+      path: '/chat/:id',
+      builder: (_, s) => ChatScreen(contactId: s.pathParameters['id']!),
+    ),
+    // Filled in by the next iteration:
     GoRoute(path: '/call/:id', builder: (_, _) => const _ComingSoon('Video call')),
     GoRoute(path: '/games/:id', builder: (_, _) => const _ComingSoon('Games')),
   ],

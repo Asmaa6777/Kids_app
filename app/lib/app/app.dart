@@ -4,23 +4,19 @@ import 'package:provider/provider.dart';
 
 import '../data/family_store.dart';
 import '../data/models.dart';
-import '../services/kiosk.dart';
-import '../services/speaker.dart';
+import '../services/app_services.dart';
 import '../theme/app_theme.dart';
 import 'router.dart';
 
 /// The root widget: shares the store and services with every screen, plus theme + router.
 ///
 /// Services are passed in (not created inside screens) so tests can hand in
-/// fakes: `FamilyCallApp(store: ..., speaker: RecordingSpeaker(), kiosk: FakeKiosk())`.
+/// fakes: `FamilyCallApp(store: ..., services: AppServices.fake())`.
 class FamilyCallApp extends StatefulWidget {
-  FamilyCallApp({super.key, required this.store, this.initialLocation, Speaker? speaker, Kiosk? kiosk})
-    : speaker = speaker ?? TtsSpeaker(),
-      kiosk = kiosk ?? AndroidKiosk();
+  const FamilyCallApp({super.key, required this.store, required this.services, this.initialLocation});
 
   final FamilyStore store;
-  final Speaker speaker;
-  final Kiosk kiosk;
+  final AppServices services;
 
   /// Where to start. If null: welcome until set up, then the child home or the relative's view.
   final String? initialLocation;
@@ -47,8 +43,10 @@ class _FamilyCallAppState extends State<FamilyCallApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: widget.store),
-        Provider.value(value: widget.speaker),
-        Provider.value(value: widget.kiosk),
+        Provider.value(value: widget.services.speaker),
+        Provider.value(value: widget.services.kiosk),
+        Provider.value(value: widget.services.recorder),
+        Provider.value(value: widget.services.player),
       ],
       child: MaterialApp.router(
         title: 'Family Call',

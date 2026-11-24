@@ -1,8 +1,7 @@
 import 'package:family_call/app/app.dart';
 import 'package:family_call/data/family_repository.dart';
 import 'package:family_call/data/family_store.dart';
-import 'package:family_call/services/kiosk.dart';
-import 'package:family_call/services/speaker.dart';
+import 'package:family_call/services/app_services.dart';
 import 'package:family_call/widgets/bubbly_button.dart';
 import 'package:family_call/widgets/family_avatar.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,23 +14,21 @@ FamilyStore newStore() {
 
 void main() {
   testWidgets('app starts on the welcome screen', (tester) async {
-    await tester.pumpWidget(FamilyCallApp(store: newStore(), speaker: RecordingSpeaker(), kiosk: FakeKiosk()));
+    await tester.pumpWidget(FamilyCallApp(store: newStore(), services: AppServices.fake()));
     expect(find.text('Family Call'), findsOneWidget);
     expect(find.text('Set up for my child'), findsOneWidget);
     expect(find.text('Join my family'), findsOneWidget);
   });
 
   testWidgets('tapping "Set up for my child" navigates to /setup', (tester) async {
-    await tester.pumpWidget(FamilyCallApp(store: newStore(), speaker: RecordingSpeaker(), kiosk: FakeKiosk()));
+    await tester.pumpWidget(FamilyCallApp(store: newStore(), services: AppServices.fake()));
     await tester.tap(find.byKey(const Key('choose-parent')));
     await tester.pumpAndSettle();
     expect(find.text("What's your child's name?"), findsOneWidget);
   });
 
   testWidgets('home shows one tile per family member', (tester) async {
-    await tester.pumpWidget(
-      FamilyCallApp(store: newStore(), initialLocation: '/home', speaker: RecordingSpeaker(), kiosk: FakeKiosk()),
-    );
+    await tester.pumpWidget(FamilyCallApp(store: newStore(), initialLocation: '/home', services: AppServices.fake()));
     expect(find.text('Grandma'), findsOneWidget);
     expect(find.byKey(const Key('unread-dot')), findsWidgets); // Grandma has an unread message
     // The grid builds lazily, so scroll to reach the last (6th) contact.
