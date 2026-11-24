@@ -1,0 +1,25 @@
+{
+  "name": "familycall-functions",
+  "private": true,
+  "main": "lib/src/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test:unit": "npm run build && node --test lib/test/logic.test.js",
+    "test:emulator": "npm run build && node --test --test-concurrency=1 lib/test/functions.test.js",
+    "test": "npm run test:unit && npm run build && EMULATORS=auth,firestore,functions,storage ../emulate.sh \"cd functions && node --test --test-concurrency=1 lib/test/functions.test.js\"",
+    "pretest": "node scripts/dev-secrets.cjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0",
+    "livekit-server-sdk": "^2.20.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "firebase": "^12.19.0",
+    "typescript": "^5.9.3"
+  }
+}
