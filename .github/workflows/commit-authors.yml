@@ -1,0 +1,42 @@
+name: Commit authors
+
+# Fails if any new commit is authored/committed by Claude or carries a Claude
+# co-author / session trailer. Commits must carry only the owner's name.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit authors and trailers
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            range="$BASE_SHA..$HEAD_SHA"
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            range="origin/$DEFAULT_BRANCH..$HEAD_SHA"      # new branch: only commits not on the default branch
+          else
+            range="$BEFORE..$HEAD_SHA"
+          fi
+          echo "Checking $range"
+          bad=$(git log --format='%h %an <%ae> / %cn <%ce>%n%B' "$range" \
+                | grep -inE 'noreply@anthropic\.com|^Co-Authored-By:.*Claude|^Claude-Session:|Generated with \[?Claude' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Commits must carry only the owner's name. Offending lines:"
+            echo "$bad"
+            exit 1
+          fi
+          echo "All commits OK."

@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Voice notes and photos live at families/{fid}/threads/{cid}/{file}.
+// Access mirrors the Firestore chat rule: the owner (child device), or the
+// relative bound to contact {cid}. Files are write-once and size-limited.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /families/{fid}/threads/{cid}/{file} {
+      function memberPath() {
+        return /databases/(default)/documents/families/$(fid)/members/$(request.auth.uid);
+      }
+
+      function inThread() {
+        return request.auth != null
+          && firestore.exists(memberPath())
+          && (firestore.get(memberPath()).data.role == 'owner'
+              || firestore.get(memberPath()).data.get('contactId', null) == cid);
+      }
+
+      allow read: if inThread();
+      allow create: if inThread()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*|image/.*');
+      allow update, delete: if false;
+    }
+  }
+}
