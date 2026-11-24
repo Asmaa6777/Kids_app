@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "includeCoAuthoredBy": false,
+  "env": {
+    "GIT_AUTHOR_NAME": "Asmaa Farouq",
+    "GIT_AUTHOR_EMAIL": "asmaafarouq649@gmail.com",
+    "GIT_COMMITTER_NAME": "Asmaa Farouq",
+    "GIT_COMMITTER_EMAIL": "asmaafarouq649@gmail.com"
+  }
+}
